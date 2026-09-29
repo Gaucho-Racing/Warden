@@ -1,11 +1,28 @@
 @import "tailwindcss";
 
 @theme {
+  /* Gaucho Racing brand — kept for the footer rule and logo lockup. */
   --color-gr-pink: #e105a3;
   --color-gr-purple: #8412fc;
-  --color-discord-blurple: #7289da;
+
+  /* Minecraft GUI palette. The stone values are the classic inventory
+     panel: #c6c6c6 face, white top-left bevel, #555 bottom-right bevel. */
+  --color-mc-stone: #c6c6c6;
+  --color-mc-stone-dark: #8b8b8b;
+  --color-mc-deepslate: #2b2b33;
+  --color-mc-dirt: #866043;
+  --color-mc-grass: #5fa83d;
+  --color-mc-gold: #fcdc5f;
+  --color-mc-redstone: #c8372c;
+  /* Sculk — the Warden's own colors, used as the primary action color. */
+  --color-mc-sculk: #0f7a7a;
+  --color-mc-sculk-glow: #22d3d3;
+  --color-mc-sculk-deep: #0b2b2e;
 
   --font-sans: "Geist Variable", sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+  --font-pixel: "Pixelify Sans Variable", "Geist Variable", sans-serif;
+  --font-display: "Press Start 2P", "Pixelify Sans Variable", monospace;
   --font-brand: "Inter Variable", sans-serif;
 }
 
@@ -14,10 +31,145 @@
   [role="button"]:not([aria-disabled="true"]) {
     cursor: pointer;
   }
+
+  /* Pixel art and rendered skins must never be smoothed. */
+  img[data-pixel],
+  svg[data-pixel] {
+    image-rendering: pixelated;
+    shape-rendering: crispEdges;
+  }
 }
 
-@keyframes draw-stroke {
-  to {
-    stroke-dashoffset: 0;
+/* The core Minecraft GUI primitive: a hard 3px bevel, light on the top-left
+   and dark on the bottom-right. No border-radius, no blur — the whole look
+   depends on those edges staying perfectly square.
+
+   Declared with @utility rather than @layer utilities so Tailwind v4 lets
+   other rules @apply them. */
+@utility mc-bevel {
+  box-shadow:
+    inset 3px 3px 0 0 var(--mc-bevel-light),
+    inset -3px -3px 0 0 var(--mc-bevel-dark);
+}
+
+/* Reversed bevel. Reads as pressed (buttons) or recessed (input wells). */
+@utility mc-bevel-in {
+  box-shadow:
+    inset 3px 3px 0 0 var(--mc-bevel-dark),
+    inset -3px -3px 0 0 var(--mc-bevel-light);
+}
+
+@utility mc-bevel-thin {
+  box-shadow:
+    inset 2px 2px 0 0 var(--mc-bevel-light),
+    inset -2px -2px 0 0 var(--mc-bevel-dark);
+}
+
+/* Faint stone grain so large panels don't read as flat web surfaces. */
+@utility mc-texture {
+  background-image: var(--mc-noise);
+  background-blend-mode: overlay;
+}
+
+
+/* Minecraft's menu screens sit on a tiled, darkened dirt texture. A 16px
+   turbulence tile scaled to 64px with pixelated rendering gives the same
+   chunky grain without shipping a bitmap. Used on the standalone pages
+   (link confirmation, login, 404) which have no app chrome to carry the
+   theme. */
+@utility mc-backdrop {
+  background-color: var(--mc-backdrop-base);
+  background-image: var(--mc-dirt-tile);
+  background-size: 64px 64px;
+  background-repeat: repeat;
+  image-rendering: pixelated;
+}
+
+/* Sculk glow, for the Warden mark and primary emphasis. */
+@utility mc-glow {
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--color-mc-sculk-glow) 55%, transparent));
+}
+
+/* ---------------------------------------------------------------------
+   Minecraft GUI skin, applied through the data-slot attributes shadcn
+   already emits. Keeping it here rather than editing each primitive means
+   a component can be re-pulled from shadcn without losing the theme.
+
+   .mc-bevel reads --mc-bevel-light / --mc-bevel-dark, so a variant only
+   has to redefine those two vars to get a bevel in its own hue. A white
+   highlight on a cyan button would look wrong; a lighter cyan does not.
+   --------------------------------------------------------------------- */
+@layer components {
+  [data-slot="button"] {
+    font-family: var(--font-pixel);
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+  }
+
+  [data-slot="button"][data-variant="default"] {
+    --mc-bevel-light: color-mix(in oklab, var(--primary) 62%, white);
+    --mc-bevel-dark: color-mix(in oklab, var(--primary) 60%, black);
+    @apply mc-bevel;
+  }
+
+  [data-slot="button"][data-variant="secondary"],
+  [data-slot="button"][data-variant="outline"] {
+    --mc-bevel-light: color-mix(in oklab, var(--secondary) 55%, white);
+    --mc-bevel-dark: color-mix(in oklab, var(--secondary) 62%, black);
+    @apply mc-bevel;
+  }
+
+  [data-slot="button"][data-variant="destructive"] {
+    --mc-bevel-light: color-mix(in oklab, var(--destructive) 55%, white);
+    --mc-bevel-dark: color-mix(in oklab, var(--destructive) 60%, black);
+    @apply mc-bevel;
+  }
+
+  /* Pressing a Minecraft button inverts its bevel. */
+  [data-slot="button"][data-variant]:not([data-variant="ghost"]):not([data-variant="link"]):active:not(:disabled) {
+    @apply mc-bevel-in;
+  }
+
+  [data-slot="card"],
+  [data-slot="dialog-content"],
+  [data-slot="dropdown-menu-content"],
+  [data-slot="select-content"],
+  [data-slot="tooltip-content"] {
+    @apply mc-bevel mc-texture;
+    border-color: transparent;
+  }
+
+  /* Text fields are wells, so the bevel runs the other way. */
+  [data-slot="input"],
+  [data-slot="textarea"] {
+    @apply mc-bevel-in;
+    border-color: transparent;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+
+  [data-slot="select-trigger"] {
+    @apply mc-bevel-thin;
+    border-color: transparent;
+    font-family: var(--font-pixel);
+  }
+
+  [data-slot="badge"] {
+    @apply mc-bevel-thin;
+    border-color: transparent;
+    font-family: var(--font-pixel);
+    letter-spacing: 0.02em;
+  }
+
+  [data-slot="dropdown-menu-item"],
+  [data-slot="select-item"],
+  [data-slot="dropdown-menu-label"] {
+    font-family: var(--font-pixel);
+  }
+
+  /* Player skins are 8x8 source art; smoothing them breaks the illusion. */
+  [data-slot="avatar"],
+  [data-slot="avatar-image"] {
+    image-rendering: pixelated;
   }
 }

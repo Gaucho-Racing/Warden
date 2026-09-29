@@ -1,6 +1,7 @@
-import { KeyRound, LogOut, Menu, Settings, Shield, Users } from "lucide-react"
+import { LogOut, Menu, Settings } from "lucide-react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 
+import { PixelGear, PixelHead, PixelHeads, PixelKey, WardenMark } from "@/components/icons/pixel"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,10 +17,10 @@ import { useAuth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 
 const mobileItems = [
-  { to: "/account", label: "My Account", icon: KeyRound, adminOnly: false },
-  { to: "/players", label: "Players", icon: Users, adminOnly: true },
-  { to: "/bindings", label: "Bindings", icon: Shield, adminOnly: true },
-  { to: "/settings", label: "Settings", icon: Settings, adminOnly: false },
+  { to: "/account", label: "My Account", icon: PixelHead, adminOnly: false },
+  { to: "/players", label: "Players", icon: PixelHeads, adminOnly: true },
+  { to: "/bindings", label: "Bindings", icon: PixelKey, adminOnly: true },
+  { to: "/settings", label: "Settings", icon: PixelGear, adminOnly: false },
 ]
 
 function sectionTitle(pathname: string) {
@@ -87,7 +88,7 @@ export function AppHeader() {
   const section = sectionTitle(pathname)
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/90 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/75 lg:px-6">
+    <header className="sticky top-0 z-30 flex h-20 items-center gap-3 border-b-4 border-border bg-background px-4 lg:px-6">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon" className="lg:hidden">
@@ -96,14 +97,14 @@ export function AppHeader() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-52">
-          <DropdownMenuLabel>Warden</DropdownMenuLabel>
+          <DropdownMenuLabel className="font-display text-[0.6rem]">WARDEN</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {mobileItems
             .filter((item) => !item.adminOnly || isAdmin)
             .map((item) => (
               <DropdownMenuItem key={item.to} asChild>
-                <Link to={item.to} className={cn(pathname.startsWith(item.to) && "text-gr-pink")}>
-                  <item.icon className="size-4" />
+                <Link to={item.to} className={cn(pathname.startsWith(item.to) && "text-primary")}>
+                  <item.icon className="size-4 shrink-0" />
                   {item.label}
                 </Link>
               </DropdownMenuItem>
@@ -112,14 +113,12 @@ export function AppHeader() {
       </DropdownMenu>
 
       <Link to="/account" className="flex items-center gap-2 lg:hidden">
-        <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm shadow-primary/20">
-          <Shield className="size-4" />
-        </div>
-        <span className="text-sm font-semibold">Warden</span>
+        <WardenMark className="size-8" />
+        <span className="font-display text-[0.65rem]">WARDEN</span>
       </Link>
 
       <div className="hidden min-w-0 lg:block">
-        <div className="text-lg font-semibold leading-none">{section}</div>
+        <div className="font-pixel text-xl leading-none">{section}</div>
       </div>
 
       <div className="flex-1" />

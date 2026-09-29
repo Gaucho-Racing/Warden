@@ -65,14 +65,14 @@ export default function PlayersPage() {
               <img
                 src={skinURL(account.uuid)}
                 alt={account.username}
-                className="size-10 rounded border border-border"
+                className="mc-bevel-thin size-11"
               />
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium">{account.username}</div>
+                <div className="font-pixel text-lg leading-tight">{account.username}</div>
                 <div className="font-mono text-xs text-muted-foreground">{account.uuid}</div>
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-sm">{account.identity?.name ?? account.entity_id}</div>
+                <div className="font-pixel text-base leading-tight">{account.identity?.name ?? account.entity_id}</div>
                 {account.identity?.username && (
                   <div className="text-xs text-muted-foreground">
                     @{account.identity.username}

@@ -2,6 +2,7 @@ import { ArrowRight, CheckCircle2, Loader2, ShieldAlert } from "lucide-react"
 import { useState } from "react"
 import { Link, useParams } from "react-router-dom"
 
+import { WardenMark } from "@/components/icons/pixel"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -23,7 +24,7 @@ export default function LinkPage() {
         <div className="flex flex-col items-center gap-4 text-center">
           <CheckCircle2 className="size-10 text-gr-pink" />
           <div className="space-y-1">
-            <h1 className="text-xl font-semibold">Account linked</h1>
+            <h1 className="font-pixel text-2xl">Account linked</h1>
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{linked.username}</span> is now linked
               to your Gaucho Racing account. Rejoin{" "}
@@ -57,7 +58,7 @@ export default function LinkPage() {
         <div className="flex flex-col items-center gap-4 text-center">
           <ShieldAlert className="size-10 text-destructive" />
           <div className="space-y-1">
-            <h1 className="text-xl font-semibold">This link isn&apos;t valid</h1>
+            <h1 className="font-pixel text-2xl">This link isn&apos;t valid</h1>
             <p className="text-sm text-muted-foreground">
               {errorMessage(
                 linkToken.error,
@@ -81,7 +82,7 @@ export default function LinkPage() {
     <LinkLayout>
       <div className="space-y-6">
         <div className="space-y-1 text-center">
-          <h1 className="text-xl font-semibold">Link your Minecraft account</h1>
+          <h1 className="font-pixel text-2xl">Link your Minecraft account</h1>
           <p className="text-sm text-muted-foreground">
             Confirm this is you, and we&apos;ll connect it to your Gaucho Racing account.
           </p>
@@ -92,10 +93,10 @@ export default function LinkPage() {
             <img
               src={preview.avatar_url}
               alt={preview.username}
-              className="size-16 rounded-lg border border-border"
+              className="mc-bevel-thin size-16"
             />
             <div className="text-center">
-              <div className="text-sm font-medium">{preview.username}</div>
+              <div className="font-pixel text-base">{preview.username}</div>
               <div className="font-mono text-[10px] text-muted-foreground">
                 {preview.uuid.slice(0, 8)}
               </div>
@@ -105,14 +106,14 @@ export default function LinkPage() {
           <ArrowRight className="size-5 shrink-0 text-muted-foreground" />
 
           <div className="flex flex-col items-center gap-2">
-            <Avatar className="size-16 rounded-lg">
-              <AvatarImage src={user?.avatar_url} alt={sentinelName} className="rounded-lg" />
-              <AvatarFallback className="rounded-lg">
+            <Avatar className="mc-bevel-thin size-16">
+              <AvatarImage src={user?.avatar_url} alt={sentinelName} />
+              <AvatarFallback className="font-pixel">
                 {sentinelName.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="text-center">
-              <div className="text-sm font-medium">{sentinelName}</div>
+              <div className="font-pixel text-base">{sentinelName}</div>
               <div className="text-[10px] text-muted-foreground">Sentinel</div>
             </div>
           </div>
@@ -125,7 +126,8 @@ export default function LinkPage() {
         )}
 
         <Button
-          className="w-full"
+          size="lg"
+          className="h-12 w-full text-base"
           disabled={confirmLink.isPending}
           onClick={() =>
             confirmLink.mutate(preview.token, { onSuccess: (account) => setLinked(account) })
@@ -148,7 +150,13 @@ export default function LinkPage() {
 
 function LinkLayout({ children }: { children: React.ReactNode }) {
   return (
-    <main className="flex min-h-svh items-center justify-center px-4 py-12">
+    <main className="mc-backdrop flex min-h-svh flex-col items-center justify-center gap-6 px-4 py-12">
+      <div className="flex flex-col items-center gap-2">
+        <WardenMark className="size-14 mc-glow" />
+        <span className="font-display text-[0.7rem] text-white drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)]">
+          WARDEN
+        </span>
+      </div>
       <Card className="w-full max-w-md">
         <CardContent className="p-6">{children}</CardContent>
       </Card>

@@ -82,7 +82,7 @@ function BindingRow({
     <Card>
       <CardContent className="flex flex-wrap items-center gap-4 p-4">
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-medium">{binding.group_name}</div>
+          <div className="font-pixel text-lg leading-tight">{binding.group_name}</div>
           <div className="font-mono text-xs text-muted-foreground">{binding.group_id}</div>
         </div>
         <div className="min-w-0 flex-1">
@@ -95,7 +95,7 @@ function BindingRow({
             </div>
           )}
         </div>
-        <div className="text-xs text-muted-foreground">weight {binding.weight}</div>
+        <div className="mc-bevel-in bg-input px-2 py-1 font-mono text-xs text-muted-foreground">w{binding.weight}</div>
         <Button
           variant="ghost"
           size="icon"

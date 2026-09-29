@@ -39,15 +39,15 @@ export function AppFooter() {
     <footer className="mx-auto mt-16 w-full max-w-6xl px-4 py-8 lg:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex items-center gap-3">
-          <img src="/logo/gr-logo-blank.png" alt="Gaucho Racing" className="size-12" />
+          <img src="/logo/gr-logo-blank.png" alt="Gaucho Racing" className="size-12" data-pixel />
           <span className="font-brand text-3xl font-bold tracking-tight">Gaucho Racing</span>
         </div>
-        <span className="font-mono text-xs text-muted-foreground">
+        <span className="font-pixel text-sm text-muted-foreground">
           warden{version ? ` · ${version}` : ""}
         </span>
       </div>
 
-      <div className="my-4 h-px w-full bg-gradient-to-r from-gr-pink to-gr-purple" />
+      <div className="my-4 h-1 w-full bg-gradient-to-r from-gr-pink to-gr-purple" />
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground">
@@ -61,7 +61,7 @@ export function AppFooter() {
               target="_blank"
               rel="noreferrer"
               aria-label={label}
-              className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+              className="flex size-9 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
             >
               <Icon className="size-5" />
             </a>

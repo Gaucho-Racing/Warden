@@ -75,12 +75,12 @@ export default function LoginPage() {
   }, [from, navigate, searchParams])
 
   return (
-    <main className="flex min-h-svh items-center justify-center px-4 py-12">
+    <main className="mc-backdrop flex min-h-svh items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm space-y-5 text-center">
         {loading && (
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="size-8 animate-spin text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Redirecting to Sentinel...</p>
+            <Loader2 className="size-8 animate-spin text-white" />
+            <p className="font-pixel text-base text-white drop-shadow-[1px_1px_0_rgba(0,0,0,0.8)]">Connecting to Sentinel...</p>
           </div>
         )}
 

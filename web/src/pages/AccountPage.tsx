@@ -26,9 +26,9 @@ export default function AccountPage() {
       {!account.isLoading && !account.data && (
         <Card>
           <CardContent className="space-y-3 p-6">
-            <h2 className="font-medium">No Minecraft account linked</h2>
+            <h2 className="font-pixel text-xl">No Minecraft account linked</h2>
             <p className="text-sm text-muted-foreground">
-              Join <span className="font-mono">{MINECRAFT_SERVER_ADDRESS}</span> and click the link
+              Join <span className="mc-bevel-in bg-input px-2 py-0.5 font-mono text-xs">{MINECRAFT_SERVER_ADDRESS}</span> and click the link
               that appears in chat. It signs you in here and connects your account automatically.
             </p>
           </CardContent>
@@ -41,10 +41,10 @@ export default function AccountPage() {
             <img
               src={skinURL(account.data.uuid)}
               alt={account.data.username}
-              className="size-16 rounded-lg border border-border"
+              className="mc-bevel-thin size-16"
             />
             <div className="min-w-0 flex-1">
-              <div className="font-medium">{account.data.username}</div>
+              <div className="font-pixel text-xl">{account.data.username}</div>
               <div className="font-mono text-xs text-muted-foreground">{account.data.uuid}</div>
               <div className="mt-1 text-xs text-muted-foreground">
                 Linked {new Date(account.data.created_at).toLocaleString()}

@@ -2,13 +2,15 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 @import "@fontsource-variable/inter";
+@import "@fontsource-variable/pixelify-sans";
+@import "@fontsource/press-start-2p";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-    --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', sans-serif;
+    --font-heading: var(--font-pixel);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -40,93 +42,84 @@
     --color-card: var(--card);
     --color-foreground: var(--foreground);
     --color-background: var(--background);
-    --radius-sm: calc(var(--radius) * 0.6);
-    --radius-md: calc(var(--radius) * 0.8);
+
+    /* Minecraft GUI has no rounded corners anywhere. Every shadcn radius
+       step derives from --radius, so zeroing it squares the entire app. */
+    --radius-sm: var(--radius);
+    --radius-md: var(--radius);
     --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
+    --radius-xl: var(--radius);
+    --radius-2xl: var(--radius);
+    --radius-3xl: var(--radius);
+    --radius-4xl: var(--radius);
 }
 
 :root {
-    --background: oklch(0.982 0.004 286);
-    --foreground: oklch(0.168 0.012 286);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.168 0.012 286);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.168 0.012 286);
-    --primary: #e105a3;
-    --primary-foreground: oklch(1 0 0);
-    --secondary: oklch(0.945 0.008 286);
-    --secondary-foreground: oklch(0.22 0.014 286);
-    --muted: oklch(0.948 0.007 286);
-    --muted-foreground: oklch(0.48 0.014 286);
-    --accent: color-mix(in oklab, #8412fc 8%, white);
-    --accent-foreground: color-mix(in oklab, #8412fc 50%, black);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.19 0.014 286 / 10%);
-    --input: oklch(0.19 0.014 286 / 14%);
-    --ring: #8412fc;
-    --chart-1: #e105a3;
-    --chart-2: #8412fc;
-    --chart-3: oklch(0.66 0.16 175);
-    --chart-4: oklch(0.72 0.14 80);
-    --chart-5: oklch(0.57 0.18 28);
-    --radius: 0.5rem;
-    --sidebar: oklch(0.966 0.006 286);
-    --sidebar-foreground: oklch(0.19 0.014 286);
-    --sidebar-primary: #e105a3;
-    --sidebar-primary-foreground: oklch(1 0 0);
-    --sidebar-accent: oklch(0.93 0.011 286);
-    --sidebar-accent-foreground: oklch(0.19 0.014 286);
-    --sidebar-border: oklch(0.19 0.014 286 / 10%);
-    --sidebar-ring: #8412fc;
-}
+    /* Warden is dark-only: the Deep Dark is where the mob lives, and a
+       server admin panel has no daylight use case. The .dark class is
+       still hardcoded on <html> so shadcn's dark: variant utilities
+       continue to resolve. */
+    --radius: 0px;
 
-.dark {
-    --background: oklch(0.145 0.008 286);
-    --foreground: oklch(0.964 0.003 286);
-    --card: oklch(0.185 0.009 286);
-    --card-foreground: oklch(0.964 0.003 286);
-    --popover: oklch(0.19 0.01 286);
-    --popover-foreground: oklch(0.964 0.003 286);
-    --primary: #e105a3;
-    --primary-foreground: oklch(1 0 0);
-    --secondary: oklch(0.235 0.012 286);
-    --secondary-foreground: oklch(0.94 0.004 286);
-    --muted: oklch(0.245 0.01 286);
-    --muted-foreground: oklch(0.71 0.012 286);
-    --accent: color-mix(in oklab, #8412fc 18%, black);
-    --accent-foreground: color-mix(in oklab, #8412fc 20%, white);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 9%);
-    --input: oklch(1 0 0 / 12%);
-    --ring: #8412fc;
-    --chart-1: #e105a3;
-    --chart-2: #8412fc;
-    --chart-3: oklch(0.7 0.15 175);
-    --chart-4: oklch(0.74 0.13 80);
-    --chart-5: oklch(0.66 0.17 28);
-    --sidebar: oklch(0.165 0.008 286);
-    --sidebar-foreground: oklch(0.94 0.004 286);
-    --sidebar-primary: #e105a3;
-    --sidebar-primary-foreground: oklch(1 0 0);
-    --sidebar-accent: oklch(0.235 0.012 286);
-    --sidebar-accent-foreground: oklch(0.96 0.004 286);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: #8412fc;
+    /* Deepslate + sculk, the Deep Dark the Warden actually lives in. */
+    --background: #101016;
+    --foreground: #e6e6ea;
+    --card: #2b2b33;
+    --card-foreground: #e6e6ea;
+    --popover: #2b2b33;
+    --popover-foreground: #e6e6ea;
+    --primary: #22d3d3;
+    --primary-foreground: #06232a;
+    --secondary: #3a3a44;
+    --secondary-foreground: #e6e6ea;
+    --muted: #34343d;
+    --muted-foreground: #a2a2b0;
+    --accent: #12333a;
+    --accent-foreground: #7ce8e8;
+    --destructive: #e0574a;
+    --border: #4a4a55;
+    --input: #1a1a20;
+    --ring: #22d3d3;
+    --chart-1: #22d3d3;
+    --chart-2: #6fc24a;
+    --chart-3: #a8794f;
+    --chart-4: #fcdc5f;
+    --chart-5: #e0574a;
+    --sidebar: #1a1a22;
+    --sidebar-foreground: #e6e6ea;
+    --sidebar-primary: #22d3d3;
+    --sidebar-primary-foreground: #06232a;
+    --sidebar-accent: #2b2b33;
+    --sidebar-accent-foreground: #7ce8e8;
+    --sidebar-border: #3a3a44;
+    --sidebar-ring: #22d3d3;
+
+    --mc-bevel-light: #55555f;
+    --mc-bevel-dark: #08080c;
+    --warden-body: #0e2b2e;
+    --warden-glow: #22d3d3;
+    --mc-backdrop-base: #2e2419;
+    --mc-dirt-tile: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' shape-rendering='crispEdges'><rect x='0' y='0' width='1' height='1' fill='%23523f2b'/><rect x='1' y='0' width='1' height='1' fill='%234a3a28'/><rect x='2' y='0' width='1' height='1' fill='%23523f2b'/><rect x='3' y='0' width='1' height='1' fill='%23523f2b'/><rect x='4' y='0' width='1' height='1' fill='%234a3a28'/><rect x='5' y='0' width='1' height='1' fill='%234a3a28'/><rect x='6' y='0' width='1' height='1' fill='%2342331f'/><rect x='7' y='0' width='1' height='1' fill='%2342331f'/><rect x='8' y='0' width='1' height='1' fill='%234a3a28'/><rect x='9' y='0' width='1' height='1' fill='%23523f2b'/><rect x='10' y='0' width='1' height='1' fill='%2342331f'/><rect x='11' y='0' width='1' height='1' fill='%234a3a28'/><rect x='12' y='0' width='1' height='1' fill='%2342331f'/><rect x='13' y='0' width='1' height='1' fill='%234a3a28'/><rect x='14' y='0' width='1' height='1' fill='%23523f2b'/><rect x='15' y='0' width='1' height='1' fill='%23382a1c'/><rect x='0' y='1' width='1' height='1' fill='%2342331f'/><rect x='1' y='1' width='1' height='1' fill='%234a3a28'/><rect x='2' y='1' width='1' height='1' fill='%234a3a28'/><rect x='3' y='1' width='1' height='1' fill='%2342331f'/><rect x='4' y='1' width='1' height='1' fill='%2342331f'/><rect x='5' y='1' width='1' height='1' fill='%234a3a28'/><rect x='6' y='1' width='1' height='1' fill='%234a3a28'/><rect x='7' y='1' width='1' height='1' fill='%23523f2b'/><rect x='8' y='1' width='1' height='1' fill='%23523f2b'/><rect x='9' y='1' width='1' height='1' fill='%2342331f'/><rect x='10' y='1' width='1' height='1' fill='%2342331f'/><rect x='11' y='1' width='1' height='1' fill='%234a3a28'/><rect x='12' y='1' width='1' height='1' fill='%2342331f'/><rect x='13' y='1' width='1' height='1' fill='%2342331f'/><rect x='14' y='1' width='1' height='1' fill='%234a3a28'/><rect x='15' y='1' width='1' height='1' fill='%234a3a28'/><rect x='0' y='2' width='1' height='1' fill='%234a3a28'/><rect x='1' y='2' width='1' height='1' fill='%234a3a28'/><rect x='2' y='2' width='1' height='1' fill='%234a3a28'/><rect x='3' y='2' width='1' height='1' fill='%234a3a28'/><rect x='4' y='2' width='1' height='1' fill='%2342331f'/><rect x='5' y='2' width='1' height='1' fill='%2342331f'/><rect x='6' y='2' width='1' height='1' fill='%234a3a28'/><rect x='7' y='2' width='1' height='1' fill='%234a3a28'/><rect x='8' y='2' width='1' height='1' fill='%23523f2b'/><rect x='9' y='2' width='1' height='1' fill='%23382a1c'/><rect x='10' y='2' width='1' height='1' fill='%23523f2b'/><rect x='11' y='2' width='1' height='1' fill='%234a3a28'/><rect x='12' y='2' width='1' height='1' fill='%2342331f'/><rect x='13' y='2' width='1' height='1' fill='%234a3a28'/><rect x='14' y='2' width='1' height='1' fill='%2342331f'/><rect x='15' y='2' width='1' height='1' fill='%2342331f'/><rect x='0' y='3' width='1' height='1' fill='%23382a1c'/><rect x='1' y='3' width='1' height='1' fill='%23523f2b'/><rect x='2' y='3' width='1' height='1' fill='%234a3a28'/><rect x='3' y='3' width='1' height='1' fill='%2342331f'/><rect x='4' y='3' width='1' height='1' fill='%234a3a28'/><rect x='5' y='3' width='1' height='1' fill='%23523f2b'/><rect x='6' y='3' width='1' height='1' fill='%2342331f'/><rect x='7' y='3' width='1' height='1' fill='%23382a1c'/><rect x='8' y='3' width='1' height='1' fill='%23523f2b'/><rect x='9' y='3' width='1' height='1' fill='%234a3a28'/><rect x='10' y='3' width='1' height='1' fill='%234a3a28'/><rect x='11' y='3' width='1' height='1' fill='%2342331f'/><rect x='12' y='3' width='1' height='1' fill='%23382a1c'/><rect x='13' y='3' width='1' height='1' fill='%23382a1c'/><rect x='14' y='3' width='1' height='1' fill='%2342331f'/><rect x='15' y='3' width='1' height='1' fill='%234a3a28'/><rect x='0' y='4' width='1' height='1' fill='%23382a1c'/><rect x='1' y='4' width='1' height='1' fill='%234a3a28'/><rect x='2' y='4' width='1' height='1' fill='%234a3a28'/><rect x='3' y='4' width='1' height='1' fill='%234a3a28'/><rect x='4' y='4' width='1' height='1' fill='%234a3a28'/><rect x='5' y='4' width='1' height='1' fill='%23523f2b'/><rect x='6' y='4' width='1' height='1' fill='%234a3a28'/><rect x='7' y='4' width='1' height='1' fill='%23382a1c'/><rect x='8' y='4' width='1' height='1' fill='%23523f2b'/><rect x='9' y='4' width='1' height='1' fill='%234a3a28'/><rect x='10' y='4' width='1' height='1' fill='%234a3a28'/><rect x='11' y='4' width='1' height='1' fill='%2342331f'/><rect x='12' y='4' width='1' height='1' fill='%234a3a28'/><rect x='13' y='4' width='1' height='1' fill='%2342331f'/><rect x='14' y='4' width='1' height='1' fill='%2342331f'/><rect x='15' y='4' width='1' height='1' fill='%234a3a28'/><rect x='0' y='5' width='1' height='1' fill='%23523f2b'/><rect x='1' y='5' width='1' height='1' fill='%23523f2b'/><rect x='2' y='5' width='1' height='1' fill='%2342331f'/><rect x='3' y='5' width='1' height='1' fill='%23523f2b'/><rect x='4' y='5' width='1' height='1' fill='%23523f2b'/><rect x='5' y='5' width='1' height='1' fill='%234a3a28'/><rect x='6' y='5' width='1' height='1' fill='%234a3a28'/><rect x='7' y='5' width='1' height='1' fill='%2342331f'/><rect x='8' y='5' width='1' height='1' fill='%2342331f'/><rect x='9' y='5' width='1' height='1' fill='%2342331f'/><rect x='10' y='5' width='1' height='1' fill='%23382a1c'/><rect x='11' y='5' width='1' height='1' fill='%23382a1c'/><rect x='12' y='5' width='1' height='1' fill='%234a3a28'/><rect x='13' y='5' width='1' height='1' fill='%23382a1c'/><rect x='14' y='5' width='1' height='1' fill='%23382a1c'/><rect x='15' y='5' width='1' height='1' fill='%234a3a28'/><rect x='0' y='6' width='1' height='1' fill='%23523f2b'/><rect x='1' y='6' width='1' height='1' fill='%234a3a28'/><rect x='2' y='6' width='1' height='1' fill='%2342331f'/><rect x='3' y='6' width='1' height='1' fill='%2342331f'/><rect x='4' y='6' width='1' height='1' fill='%2342331f'/><rect x='5' y='6' width='1' height='1' fill='%234a3a28'/><rect x='6' y='6' width='1' height='1' fill='%234a3a28'/><rect x='7' y='6' width='1' height='1' fill='%234a3a28'/><rect x='8' y='6' width='1' height='1' fill='%23523f2b'/><rect x='9' y='6' width='1' height='1' fill='%23523f2b'/><rect x='10' y='6' width='1' height='1' fill='%2342331f'/><rect x='11' y='6' width='1' height='1' fill='%2342331f'/><rect x='12' y='6' width='1' height='1' fill='%234a3a28'/><rect x='13' y='6' width='1' height='1' fill='%2342331f'/><rect x='14' y='6' width='1' height='1' fill='%23523f2b'/><rect x='15' y='6' width='1' height='1' fill='%234a3a28'/><rect x='0' y='7' width='1' height='1' fill='%2342331f'/><rect x='1' y='7' width='1' height='1' fill='%2342331f'/><rect x='2' y='7' width='1' height='1' fill='%2342331f'/><rect x='3' y='7' width='1' height='1' fill='%23523f2b'/><rect x='4' y='7' width='1' height='1' fill='%2342331f'/><rect x='5' y='7' width='1' height='1' fill='%23523f2b'/><rect x='6' y='7' width='1' height='1' fill='%234a3a28'/><rect x='7' y='7' width='1' height='1' fill='%23523f2b'/><rect x='8' y='7' width='1' height='1' fill='%23523f2b'/><rect x='9' y='7' width='1' height='1' fill='%2342331f'/><rect x='10' y='7' width='1' height='1' fill='%234a3a28'/><rect x='11' y='7' width='1' height='1' fill='%23382a1c'/><rect x='12' y='7' width='1' height='1' fill='%234a3a28'/><rect x='13' y='7' width='1' height='1' fill='%23382a1c'/><rect x='14' y='7' width='1' height='1' fill='%234a3a28'/><rect x='15' y='7' width='1' height='1' fill='%2342331f'/><rect x='0' y='8' width='1' height='1' fill='%2342331f'/><rect x='1' y='8' width='1' height='1' fill='%23523f2b'/><rect x='2' y='8' width='1' height='1' fill='%234a3a28'/><rect x='3' y='8' width='1' height='1' fill='%2342331f'/><rect x='4' y='8' width='1' height='1' fill='%234a3a28'/><rect x='5' y='8' width='1' height='1' fill='%234a3a28'/><rect x='6' y='8' width='1' height='1' fill='%234a3a28'/><rect x='7' y='8' width='1' height='1' fill='%2342331f'/><rect x='8' y='8' width='1' height='1' fill='%2342331f'/><rect x='9' y='8' width='1' height='1' fill='%23523f2b'/><rect x='10' y='8' width='1' height='1' fill='%23382a1c'/><rect x='11' y='8' width='1' height='1' fill='%234a3a28'/><rect x='12' y='8' width='1' height='1' fill='%234a3a28'/><rect x='13' y='8' width='1' height='1' fill='%23382a1c'/><rect x='14' y='8' width='1' height='1' fill='%23382a1c'/><rect x='15' y='8' width='1' height='1' fill='%23523f2b'/><rect x='0' y='9' width='1' height='1' fill='%234a3a28'/><rect x='1' y='9' width='1' height='1' fill='%234a3a28'/><rect x='2' y='9' width='1' height='1' fill='%234a3a28'/><rect x='3' y='9' width='1' height='1' fill='%2342331f'/><rect x='4' y='9' width='1' height='1' fill='%234a3a28'/><rect x='5' y='9' width='1' height='1' fill='%2342331f'/><rect x='6' y='9' width='1' height='1' fill='%2342331f'/><rect x='7' y='9' width='1' height='1' fill='%234a3a28'/><rect x='8' y='9' width='1' height='1' fill='%234a3a28'/><rect x='9' y='9' width='1' height='1' fill='%23382a1c'/><rect x='10' y='9' width='1' height='1' fill='%23382a1c'/><rect x='11' y='9' width='1' height='1' fill='%234a3a28'/><rect x='12' y='9' width='1' height='1' fill='%23523f2b'/><rect x='13' y='9' width='1' height='1' fill='%2342331f'/><rect x='14' y='9' width='1' height='1' fill='%234a3a28'/><rect x='15' y='9' width='1' height='1' fill='%23523f2b'/><rect x='0' y='10' width='1' height='1' fill='%234a3a28'/><rect x='1' y='10' width='1' height='1' fill='%2342331f'/><rect x='2' y='10' width='1' height='1' fill='%23523f2b'/><rect x='3' y='10' width='1' height='1' fill='%2342331f'/><rect x='4' y='10' width='1' height='1' fill='%2342331f'/><rect x='5' y='10' width='1' height='1' fill='%2342331f'/><rect x='6' y='10' width='1' height='1' fill='%23382a1c'/><rect x='7' y='10' width='1' height='1' fill='%2342331f'/><rect x='8' y='10' width='1' height='1' fill='%234a3a28'/><rect x='9' y='10' width='1' height='1' fill='%2342331f'/><rect x='10' y='10' width='1' height='1' fill='%2342331f'/><rect x='11' y='10' width='1' height='1' fill='%2342331f'/><rect x='12' y='10' width='1' height='1' fill='%2342331f'/><rect x='13' y='10' width='1' height='1' fill='%2342331f'/><rect x='14' y='10' width='1' height='1' fill='%2342331f'/><rect x='15' y='10' width='1' height='1' fill='%234a3a28'/><rect x='0' y='11' width='1' height='1' fill='%2342331f'/><rect x='1' y='11' width='1' height='1' fill='%2342331f'/><rect x='2' y='11' width='1' height='1' fill='%23523f2b'/><rect x='3' y='11' width='1' height='1' fill='%23523f2b'/><rect x='4' y='11' width='1' height='1' fill='%234a3a28'/><rect x='5' y='11' width='1' height='1' fill='%234a3a28'/><rect x='6' y='11' width='1' height='1' fill='%23523f2b'/><rect x='7' y='11' width='1' height='1' fill='%234a3a28'/><rect x='8' y='11' width='1' height='1' fill='%234a3a28'/><rect x='9' y='11' width='1' height='1' fill='%234a3a28'/><rect x='10' y='11' width='1' height='1' fill='%234a3a28'/><rect x='11' y='11' width='1' height='1' fill='%234a3a28'/><rect x='12' y='11' width='1' height='1' fill='%23382a1c'/><rect x='13' y='11' width='1' height='1' fill='%2342331f'/><rect x='14' y='11' width='1' height='1' fill='%2342331f'/><rect x='15' y='11' width='1' height='1' fill='%2342331f'/><rect x='0' y='12' width='1' height='1' fill='%23523f2b'/><rect x='1' y='12' width='1' height='1' fill='%23382a1c'/><rect x='2' y='12' width='1' height='1' fill='%23523f2b'/><rect x='3' y='12' width='1' height='1' fill='%234a3a28'/><rect x='4' y='12' width='1' height='1' fill='%23523f2b'/><rect x='5' y='12' width='1' height='1' fill='%23382a1c'/><rect x='6' y='12' width='1' height='1' fill='%234a3a28'/><rect x='7' y='12' width='1' height='1' fill='%2342331f'/><rect x='8' y='12' width='1' height='1' fill='%2342331f'/><rect x='9' y='12' width='1' height='1' fill='%234a3a28'/><rect x='10' y='12' width='1' height='1' fill='%2342331f'/><rect x='11' y='12' width='1' height='1' fill='%2342331f'/><rect x='12' y='12' width='1' height='1' fill='%23523f2b'/><rect x='13' y='12' width='1' height='1' fill='%234a3a28'/><rect x='14' y='12' width='1' height='1' fill='%2342331f'/><rect x='15' y='12' width='1' height='1' fill='%234a3a28'/><rect x='0' y='13' width='1' height='1' fill='%234a3a28'/><rect x='1' y='13' width='1' height='1' fill='%234a3a28'/><rect x='2' y='13' width='1' height='1' fill='%23382a1c'/><rect x='3' y='13' width='1' height='1' fill='%2342331f'/><rect x='4' y='13' width='1' height='1' fill='%2342331f'/><rect x='5' y='13' width='1' height='1' fill='%2342331f'/><rect x='6' y='13' width='1' height='1' fill='%234a3a28'/><rect x='7' y='13' width='1' height='1' fill='%234a3a28'/><rect x='8' y='13' width='1' height='1' fill='%23382a1c'/><rect x='9' y='13' width='1' height='1' fill='%23523f2b'/><rect x='10' y='13' width='1' height='1' fill='%23523f2b'/><rect x='11' y='13' width='1' height='1' fill='%2342331f'/><rect x='12' y='13' width='1' height='1' fill='%234a3a28'/><rect x='13' y='13' width='1' height='1' fill='%234a3a28'/><rect x='14' y='13' width='1' height='1' fill='%2342331f'/><rect x='15' y='13' width='1' height='1' fill='%23382a1c'/><rect x='0' y='14' width='1' height='1' fill='%23382a1c'/><rect x='1' y='14' width='1' height='1' fill='%234a3a28'/><rect x='2' y='14' width='1' height='1' fill='%234a3a28'/><rect x='3' y='14' width='1' height='1' fill='%2342331f'/><rect x='4' y='14' width='1' height='1' fill='%234a3a28'/><rect x='5' y='14' width='1' height='1' fill='%23382a1c'/><rect x='6' y='14' width='1' height='1' fill='%2342331f'/><rect x='7' y='14' width='1' height='1' fill='%23523f2b'/><rect x='8' y='14' width='1' height='1' fill='%23382a1c'/><rect x='9' y='14' width='1' height='1' fill='%2342331f'/><rect x='10' y='14' width='1' height='1' fill='%2342331f'/><rect x='11' y='14' width='1' height='1' fill='%2342331f'/><rect x='12' y='14' width='1' height='1' fill='%234a3a28'/><rect x='13' y='14' width='1' height='1' fill='%234a3a28'/><rect x='14' y='14' width='1' height='1' fill='%2342331f'/><rect x='15' y='14' width='1' height='1' fill='%234a3a28'/><rect x='0' y='15' width='1' height='1' fill='%234a3a28'/><rect x='1' y='15' width='1' height='1' fill='%234a3a28'/><rect x='2' y='15' width='1' height='1' fill='%23523f2b'/><rect x='3' y='15' width='1' height='1' fill='%23382a1c'/><rect x='4' y='15' width='1' height='1' fill='%2342331f'/><rect x='5' y='15' width='1' height='1' fill='%23382a1c'/><rect x='6' y='15' width='1' height='1' fill='%234a3a28'/><rect x='7' y='15' width='1' height='1' fill='%234a3a28'/><rect x='8' y='15' width='1' height='1' fill='%234a3a28'/><rect x='9' y='15' width='1' height='1' fill='%2342331f'/><rect x='10' y='15' width='1' height='1' fill='%234a3a28'/><rect x='11' y='15' width='1' height='1' fill='%23523f2b'/><rect x='12' y='15' width='1' height='1' fill='%234a3a28'/><rect x='13' y='15' width='1' height='1' fill='%2342331f'/><rect x='14' y='15' width='1' height='1' fill='%23382a1c'/><rect x='15' y='15' width='1' height='1' fill='%23382a1c'/></svg>");
+    --mc-noise: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/><feColorMatrix type='saturate' values='0'/></filter><rect width='64' height='64' filter='url(%23n)' opacity='0.05'/></svg>");
 }
 
 @layer base {
+  /* Minecraft has no rounded corners. Zeroing --radius covers the shadcn
+     scale, but not rounded-full (avatars, skeletons, pills) which is a
+     literal 9999px. This is the blunt instrument that squares those too. */
   * {
     @apply border-border outline-ring/50;
+    border-radius: 0 !important;
     }
   body {
     @apply bg-background text-foreground antialiased;
     }
   html {
     @apply font-sans;
+    }
+  h1, h2, h3, h4 {
+    font-family: var(--font-pixel);
+    letter-spacing: 0.01em;
     }
   html,
   body,

@@ -1,14 +1,15 @@
-import { KeyRound, Shield, Users, Settings } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 
+import { PixelGear, PixelHead, PixelHeads, PixelKey, WardenMark } from "@/components/icons/pixel"
 import { useAuth } from "@/lib/auth"
+import { MINECRAFT_SERVER_ADDRESS } from "@/lib/links"
 import { cn } from "@/lib/utils"
 
 const navItems = [
-  { to: "/account", label: "My Account", icon: KeyRound, adminOnly: false },
-  { to: "/players", label: "Players", icon: Users, adminOnly: true },
-  { to: "/bindings", label: "Bindings", icon: Shield, adminOnly: true },
-  { to: "/settings", label: "Settings", icon: Settings, adminOnly: false },
+  { to: "/account", label: "My Account", icon: PixelHead, adminOnly: false },
+  { to: "/players", label: "Players", icon: PixelHeads, adminOnly: true },
+  { to: "/bindings", label: "Bindings", icon: PixelKey, adminOnly: true },
+  { to: "/settings", label: "Settings", icon: PixelGear, adminOnly: false },
 ]
 
 function isActive(currentPath: string, target: string) {
@@ -20,14 +21,18 @@ export function AppSidebar() {
   const { isAdmin } = useAuth()
 
   return (
-    <aside className="hidden border-r border-sidebar-border/70 bg-sidebar text-sidebar-foreground lg:flex lg:min-h-svh lg:flex-col">
-      <div className="flex h-16 items-center gap-3 border-b border-sidebar-border/70 px-4">
-        <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm shadow-primary/25">
-          <Shield className="size-5" />
+    <aside className="hidden border-r-4 border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex lg:min-h-svh lg:flex-col">
+      <div className="flex h-20 items-center gap-3 border-b-4 border-sidebar-border px-4">
+        <WardenMark className="size-10 shrink-0 mc-glow" />
+        <div className="min-w-0">
+          <div className="font-display text-[0.7rem] leading-none tracking-tight">WARDEN</div>
+          <div className="mt-1.5 font-mono text-[0.6rem] text-muted-foreground">
+            {MINECRAFT_SERVER_ADDRESS}
+          </div>
         </div>
-        <div className="min-w-0 text-base font-semibold leading-none">Warden</div>
       </div>
-      <nav className="flex-1 space-y-1 px-3 py-4">
+
+      <nav className="flex-1 space-y-1.5 p-3">
         {navItems
           .filter((item) => !item.adminOnly || isAdmin)
           .map((item) => {
@@ -37,13 +42,21 @@ export function AppSidebar() {
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors",
+                  "flex h-11 items-center gap-3 px-3 font-pixel text-base transition-none",
                   active
-                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/15"
-                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    ? "mc-bevel bg-primary text-primary-foreground"
+                    : "mc-bevel-thin bg-sidebar-accent/40 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 )}
+                style={
+                  active
+                    ? ({
+                        "--mc-bevel-light": "color-mix(in oklab, var(--primary) 62%, white)",
+                        "--mc-bevel-dark": "color-mix(in oklab, var(--primary) 60%, black)",
+                      } as React.CSSProperties)
+                    : undefined
+                }
               >
-                <item.icon className="size-4" />
+                <item.icon className="size-5 shrink-0" />
                 <span>{item.label}</span>
               </Link>
             )
