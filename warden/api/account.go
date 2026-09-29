@@ -13,7 +13,7 @@ import (
 // Minecraft name to real team member is exactly the kind of directory that
 // shouldn't be readable by anyone who can hit the API.
 func ListAccounts(c *gin.Context) {
-	Require(c, RequestUserIsAdmin(c))
+	Require(c, RequestUserIsMinecraftAdmin(c))
 	accounts, err := service.ListAccounts()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -53,7 +53,7 @@ func GetAccount(c *gin.Context) {
 	}
 	// Readable by the owner or an admin — same rule as the list, scoped to
 	// the single row.
-	Require(c, Any(RequestUserIsAdmin(c), RequestTokenHasEntityID(c, account.EntityID)))
+	Require(c, Any(RequestUserIsMinecraftAdmin(c), RequestTokenHasEntityID(c, account.EntityID)))
 	c.JSON(http.StatusOK, account)
 }
 
@@ -75,7 +75,7 @@ func DeleteAccount(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	Require(c, Any(RequestUserIsAdmin(c), RequestTokenHasEntityID(c, account.EntityID)))
+	Require(c, Any(RequestUserIsMinecraftAdmin(c), RequestTokenHasEntityID(c, account.EntityID)))
 
 	if err := service.DeleteAccount(uuid); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

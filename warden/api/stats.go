@@ -47,7 +47,7 @@ func GetPlayerStats(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	Require(c, Any(RequestUserIsAdmin(c), RequestTokenHasEntityID(c, account.EntityID)))
+	Require(c, Any(RequestUserIsMinecraftAdmin(c), RequestTokenHasEntityID(c, account.EntityID)))
 
 	stats, err := service.PlayerStatsForUUID(uuid)
 	if err != nil {

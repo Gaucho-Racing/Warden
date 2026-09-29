@@ -44,21 +44,6 @@ function PixelArt({
   )
 }
 
-const HEAD = [
-  "............",
-  ".XXXXXXXXXX.",
-  ".XXXXXXXXXX.",
-  ".XX..XX..XX.",
-  ".XX..XX..XX.",
-  ".XXXXXXXXXX.",
-  ".XXXXXXXXXX.",
-  ".XXXX..XXXX.",
-  ".XXXXXXXXXX.",
-  ".XXXXXXXXXX.",
-  "............",
-  "............",
-]
-
 const HEADS = [
   "............",
   ".XXXX..XXXX.",
@@ -70,21 +55,6 @@ const HEADS = [
   ".XXXXXXXXXX.",
   ".XXXXXXXXXX.",
   ".XXXXXXXXXX.",
-  "............",
-  "............",
-]
-
-const KEY = [
-  "............",
-  "....XXXX....",
-  "...X....X...",
-  "...X....X...",
-  "....XXXX....",
-  ".....XX.....",
-  ".....XX.....",
-  ".....XXX....",
-  ".....XX.....",
-  ".....XXX....",
   "............",
   "............",
 ]
@@ -121,20 +91,12 @@ const HOUSE = [
 
 const mono = { X: "currentColor" }
 
-export function PixelHead(props: SVGProps<SVGSVGElement>) {
-  return <PixelArt grid={HEAD} palette={mono} {...props} />
-}
-
 export function PixelHeads(props: SVGProps<SVGSVGElement>) {
   return <PixelArt grid={HEADS} palette={mono} {...props} />
 }
 
 export function PixelHouse(props: SVGProps<SVGSVGElement>) {
   return <PixelArt grid={HOUSE} palette={mono} {...props} />
-}
-
-export function PixelKey(props: SVGProps<SVGSVGElement>) {
-  return <PixelArt grid={KEY} palette={mono} {...props} />
 }
 
 export function PixelGear(props: SVGProps<SVGSVGElement>) {

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gaucho-racing/warden/warden/pkg/sentinel"
+	"github.com/gaucho-racing/warden/warden/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,10 +20,13 @@ func GetCurrentUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-// ListSentinelGroups backs the binding editor's group picker.
-func ListSentinelGroups(c *gin.Context) {
-	Require(c, RequestTokenExists(c))
-	groups, err := sentinel.GetGroups(c.Request.Context(), GetRequestToken(c))
+// ListBindableGroups backs the binding editor's group picker. It returns
+// only the groups linked to the Warden application in Sentinel, resolved
+// with Warden's own service account rather than the caller's token — the
+// answer is a property of the app, not of who is asking.
+func ListBindableGroups(c *gin.Context) {
+	Require(c, RequestTokenCanManageBindings(c))
+	groups, err := service.BindableGroups(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return

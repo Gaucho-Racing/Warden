@@ -4,10 +4,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
   PixelGear,
   PixelGrassBlock,
-  PixelHead,
   PixelHouse,
   PixelHeads,
-  PixelKey,
 } from "@/components/icons/pixel"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -25,18 +23,14 @@ import { cn } from "@/lib/utils"
 
 const mobileItems = [
   { to: "/", label: "Home", icon: PixelHouse, adminOnly: false },
-  { to: "/account", label: "My Account", icon: PixelHead, adminOnly: false },
   { to: "/players", label: "Players", icon: PixelHeads, adminOnly: true },
-  { to: "/bindings", label: "Bindings", icon: PixelKey, adminOnly: true },
   { to: "/settings", label: "Settings", icon: PixelGear, adminOnly: false },
 ]
 
 function sectionTitle(pathname: string) {
   if (pathname === "/") return "Home"
   if (pathname.startsWith("/settings")) return "Settings"
-  if (pathname.startsWith("/bindings")) return "Bindings"
   if (pathname.startsWith("/players")) return "Players"
-  if (pathname.startsWith("/account")) return "My Account"
   return "Warden"
 }
 
@@ -95,7 +89,7 @@ function HeaderUserMenu() {
 
 export function AppHeader() {
   const { pathname } = useLocation()
-  const { isAdmin } = useAuth()
+  const { isMinecraftAdmin } = useAuth()
   const section = sectionTitle(pathname)
 
   return (
@@ -111,7 +105,7 @@ export function AppHeader() {
           <DropdownMenuLabel className="font-display text-[0.6rem]">WARDEN</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {mobileItems
-            .filter((item) => !item.adminOnly || isAdmin)
+            .filter((item) => !item.adminOnly || isMinecraftAdmin)
             .map((item) => (
               <DropdownMenuItem key={item.to} asChild>
                 <Link to={item.to} className={cn(

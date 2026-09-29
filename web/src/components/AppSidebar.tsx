@@ -3,19 +3,15 @@ import { Link, useLocation } from "react-router-dom"
 import {
   PixelGear,
   PixelGrassBlock,
-  PixelHead,
   PixelHouse,
   PixelHeads,
-  PixelKey,
 } from "@/components/icons/pixel"
 import { useAuth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { to: "/", label: "Home", icon: PixelHouse, adminOnly: false },
-  { to: "/account", label: "My Account", icon: PixelHead, adminOnly: false },
   { to: "/players", label: "Players", icon: PixelHeads, adminOnly: true },
-  { to: "/bindings", label: "Bindings", icon: PixelKey, adminOnly: true },
   { to: "/settings", label: "Settings", icon: PixelGear, adminOnly: false },
 ]
 
@@ -27,7 +23,7 @@ function isActive(currentPath: string, target: string) {
 
 export function AppSidebar() {
   const { pathname } = useLocation()
-  const { isAdmin } = useAuth()
+  const { isMinecraftAdmin } = useAuth()
 
   return (
     <aside className="hidden border-r-4 border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex lg:min-h-svh lg:flex-col">
@@ -38,7 +34,7 @@ export function AppSidebar() {
 
       <nav className="flex-1 space-y-1.5 p-3">
         {navItems
-          .filter((item) => !item.adminOnly || isAdmin)
+          .filter((item) => !item.adminOnly || isMinecraftAdmin)
           .map((item) => {
             const active = isActive(pathname, item.to)
             return (

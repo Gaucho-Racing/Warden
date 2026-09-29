@@ -2,7 +2,6 @@ import { Loader2, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
-import { PageContainer, PageHeader } from "@/components/PageContainer"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -33,22 +32,25 @@ import {
   useSentinelGroups,
 } from "@/lib/warden"
 
-export default function BindingsPage() {
+export function BindingsSection() {
   const bindings = useBindings()
   const [creating, setCreating] = useState(false)
 
   return (
-    <PageContainer>
-      <PageHeader
-        title="Bindings"
-        description="What each Sentinel group grants in Minecraft. Warden only manages the LuckPerms groups it creates — anything granted by hand in-game is left alone."
-        action={
-          <Button onClick={() => setCreating(true)}>
-            <Plus className="size-4" />
-            New binding
-          </Button>
-        }
-      />
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="font-pixel text-xl">Group bindings</h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            What each Sentinel group grants in Minecraft. Warden only manages the LuckPerms
+            groups it creates — anything granted by hand in-game is left alone.
+          </p>
+        </div>
+        <Button onClick={() => setCreating(true)}>
+          <Plus className="size-4" />
+          New binding
+        </Button>
+      </div>
 
       {bindings.isLoading && <Skeleton className="h-40 w-full rounded-xl" />}
 
@@ -67,7 +69,7 @@ export default function BindingsPage() {
       </div>
 
       <BindingDialog open={creating} onOpenChange={setCreating} />
-    </PageContainer>
+    </section>
   )
 }
 
@@ -176,18 +178,25 @@ function BindingDialog({
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Sentinel group</Label>
-            <Select value={groupID} onValueChange={setGroupID}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a group" />
-              </SelectTrigger>
-              <SelectContent>
-                {groups.data?.map((group) => (
-                  <SelectItem key={group.id} value={group.id}>
-                    {group.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {groups.data?.length === 0 ? (
+              <p className="mc-bevel-in bg-input p-3 text-xs text-muted-foreground">
+                No groups are linked to the Warden application yet. Link them in Sentinel under
+                the Warden app&apos;s Groups tab and they&apos;ll appear here.
+              </p>
+            ) : (
+              <Select value={groupID} onValueChange={setGroupID}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a group" />
+                </SelectTrigger>
+                <SelectContent>
+                  {groups.data?.map((group) => (
+                    <SelectItem key={group.id} value={group.id}>
+                      {group.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="space-y-2">

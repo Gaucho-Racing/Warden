@@ -14,9 +14,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// AdminGroup is the Sentinel group that may manage bindings and see every
-// linked account. Everything else is self-service.
-const AdminGroup = "Admins"
+const (
+	// AdminGroup is the org-wide administrator group.
+	AdminGroup = "Admins"
+	// MinecraftAdminGroup gates Warden's server-administration surface:
+	// the group-to-permission bindings and the roster of linked players.
+	// Deliberately separate from Admins so running the game server does not
+	// require org-wide admin, and vice versa.
+	MinecraftAdminGroup = "MinecraftAdmins"
+)
 
 func Run() {
 	api := InitializeRouter()
@@ -52,7 +58,7 @@ func InitializeRoutes(router *gin.Engine) {
 	router.POST("/auth/refresh", RefreshSession)
 	router.POST("/auth/logout", Logout)
 	router.GET("/users/@me", GetCurrentUser)
-	router.GET("/groups", ListSentinelGroups)
+	router.GET("/groups", ListBindableGroups)
 
 	router.GET("/accounts", ListAccounts)
 	router.GET("/accounts/@me", GetMyAccount)
@@ -221,8 +227,19 @@ func RequestUserIsAdmin(c *gin.Context) bool {
 	return RequestTokenHasGroupName(c, AdminGroup)
 }
 
+// RequestUserIsMinecraftAdmin reports membership of the Minecraft admin
+// group. Org admins are included: locking someone out of the server console
+// because they are only in Admins would be surprising, and an org admin can
+// add themselves to MinecraftAdmins anyway.
+func RequestUserIsMinecraftAdmin(c *gin.Context) bool {
+	return Any(
+		RequestTokenHasGroupName(c, MinecraftAdminGroup),
+		RequestTokenHasGroupName(c, AdminGroup),
+	)
+}
+
 func RequestTokenCanManageBindings(c *gin.Context) bool {
-	return RequestUserIsAdmin(c)
+	return RequestUserIsMinecraftAdmin(c)
 }
 
 func GetRequestToken(c *gin.Context) string {

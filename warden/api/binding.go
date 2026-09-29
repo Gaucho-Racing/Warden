@@ -18,7 +18,7 @@ type bindingRequest struct {
 }
 
 func ListBindings(c *gin.Context) {
-	Require(c, RequestTokenExists(c))
+	Require(c, RequestTokenCanManageBindings(c))
 	bindings, err := service.ListBindings()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -28,7 +28,7 @@ func ListBindings(c *gin.Context) {
 }
 
 func GetBinding(c *gin.Context) {
-	Require(c, RequestTokenExists(c))
+	Require(c, RequestTokenCanManageBindings(c))
 	binding, err := service.GetBinding(c.Param("id"))
 	if err != nil {
 		respondBindingError(c, err)

@@ -2,7 +2,6 @@ import { Loader2, Unlink } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
-import { PageContainer, PageHeader } from "@/components/PageContainer"
 import { SkinFrame } from "@/components/SkinFrame"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -10,28 +9,30 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { MINECRAFT_SERVER_ADDRESS } from "@/lib/links"
 import { errorMessage, useMyAccount, useUnlinkAccount } from "@/lib/warden"
 
-export default function AccountPage() {
+export function MinecraftAccountSection() {
   const account = useMyAccount()
   const unlink = useUnlinkAccount()
   const [confirming, setConfirming] = useState(false)
 
   return (
-    <PageContainer>
-      <PageHeader
-        title="My Account"
-        description="The Minecraft account connected to your Sentinel account."
-      />
+    <section className="space-y-3">
+      <div>
+        <h2 className="font-pixel text-xl">Minecraft account</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          The Minecraft account connected to your Sentinel account.
+        </p>
+      </div>
 
-      {account.isLoading && <Skeleton className="h-32 w-full rounded-xl" />}
+      {account.isLoading && <Skeleton className="h-28 w-full" />}
 
       {!account.isLoading && !account.data && (
         <Card>
-          <CardContent className="space-y-3 p-6">
-            <h2 className="font-pixel text-xl">No Minecraft account linked</h2>
-            <p className="text-sm text-muted-foreground">
-              Join <span className="mc-bevel-in bg-input px-2 py-0.5 font-mono text-xs">{MINECRAFT_SERVER_ADDRESS}</span> and click the link
-              that appears in chat. It signs you in here and connects your account automatically.
-            </p>
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            Nothing linked yet. Join{" "}
+            <span className="mc-bevel-in bg-input px-2 py-0.5 font-mono text-xs">
+              {MINECRAFT_SERVER_ADDRESS}
+            </span>{" "}
+            and click the link that appears in chat.
           </CardContent>
         </Card>
       )}
@@ -79,6 +80,6 @@ export default function AccountPage() {
           </CardContent>
         </Card>
       )}
-    </PageContainer>
+    </section>
   )
 }

@@ -77,6 +77,22 @@ type Group struct {
 	CreatedAt      string   `json:"created_at"`
 }
 
+// Application is the Sentinel app record. Warden only ever looks up its
+// own, to find which groups have been linked to it.
+type Application struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	ClientID string `json:"client_id"`
+	IconURL  string `json:"icon_url"`
+}
+
+// ApplicationGroup is a group linked to an application. Required marks the
+// ones Sentinel enforces at authorize time.
+type ApplicationGroup struct {
+	Group
+	Required bool `json:"required"`
+}
+
 type GroupMember struct {
 	GroupID  string `json:"group_id"`
 	EntityID string `json:"entity_id"`
@@ -142,6 +158,29 @@ func GetGroupMembers(ctx context.Context, accessToken string, groupID string) ([
 	members := []GroupMember{}
 	err := get(ctx, accessToken, "/api/groups/"+url.PathEscape(groupID)+"/members", &members)
 	return members, err
+}
+
+// GetApplicationByClientID resolves a client_id to its application record.
+// Needs the applications:read scope.
+func GetApplicationByClientID(ctx context.Context, accessToken string, clientID string) (Application, error) {
+	if strings.TrimSpace(clientID) == "" {
+		return Application{}, fmt.Errorf("client id is required")
+	}
+	var app Application
+	err := get(ctx, accessToken, "/api/applications/client/"+url.PathEscape(clientID), &app)
+	return app, err
+}
+
+// GetApplicationGroups lists the groups linked to an application. This is
+// what scopes Warden's binding editor: only groups an admin has deliberately
+// attached to the Warden app in Sentinel can be bound to a Minecraft role.
+func GetApplicationGroups(ctx context.Context, accessToken string, applicationID string) ([]ApplicationGroup, error) {
+	if strings.TrimSpace(applicationID) == "" {
+		return nil, fmt.Errorf("application id is required")
+	}
+	groups := []ApplicationGroup{}
+	err := get(ctx, accessToken, "/api/applications/"+url.PathEscape(applicationID)+"/groups", &groups)
+	return groups, err
 }
 
 // ResolveIdentities batch-resolves entity IDs to display summaries so list

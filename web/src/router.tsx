@@ -1,9 +1,7 @@
-import { createBrowserRouter } from "react-router-dom"
+import { Navigate, createBrowserRouter } from "react-router-dom"
 
 import { AppShell } from "@/components/AppShell"
 import { RequireAuth } from "@/components/RequireAuth"
-import AccountPage from "@/pages/AccountPage"
-import BindingsPage from "@/pages/BindingsPage"
 import HomePage from "@/pages/HomePage"
 import LinkPage from "@/pages/LinkPage"
 import LoginPage from "@/pages/LoginPage"
@@ -23,10 +21,11 @@ export const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { path: "/", element: <HomePage /> },
-          { path: "/account", element: <AccountPage /> },
           { path: "/players", element: <PlayersPage /> },
-          { path: "/bindings", element: <BindingsPage /> },
           { path: "/settings", element: <SettingsPage /> },
+          // Both folded into Settings; keep the old paths working.
+          { path: "/account", element: <Navigate to="/settings" replace /> },
+          { path: "/bindings", element: <Navigate to="/settings" replace /> },
         ],
       },
     ],
