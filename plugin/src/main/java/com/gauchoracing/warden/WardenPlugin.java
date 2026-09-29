@@ -65,7 +65,8 @@ public final class WardenPlugin extends JavaPlugin {
                                 getServer(),
                                 state,
                                 config.confinementRadius(),
-                                config.confinementEnabled()),
+                                config.confinementEnabled(),
+                                config.confinementReminder()),
                         this);
 
         WardenCommand command = new WardenCommand(this, loginListener);

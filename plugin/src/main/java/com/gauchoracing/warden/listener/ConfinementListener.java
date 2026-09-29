@@ -24,19 +24,24 @@ import org.bukkit.event.player.PlayerMoveEvent;
  */
 public final class ConfinementListener implements Listener {
 
-    private static final long REMINDER_INTERVAL_MILLIS = 2_000;
-
     private final Server server;
     private final PlayerState state;
     private final double radius;
     private final boolean enabled;
+    private final long reminderMillis;
     private final Map<UUID, Long> lastReminder = new ConcurrentHashMap<>();
 
-    public ConfinementListener(Server server, PlayerState state, double radius, boolean enabled) {
+    public ConfinementListener(
+            Server server,
+            PlayerState state,
+            double radius,
+            boolean enabled,
+            java.time.Duration reminderInterval) {
         this.server = server;
         this.state = state;
         this.radius = radius;
         this.enabled = enabled;
+        this.reminderMillis = reminderInterval.toMillis();
     }
 
     /**
@@ -110,7 +115,7 @@ public final class ConfinementListener implements Listener {
     private void remind(Player player) {
         long now = System.currentTimeMillis();
         Long previous = lastReminder.get(player.getUniqueId());
-        if (previous != null && now - previous < REMINDER_INTERVAL_MILLIS) {
+        if (previous != null && now - previous < reminderMillis) {
             return;
         }
         lastReminder.put(player.getUniqueId(), now);

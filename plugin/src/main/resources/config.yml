@@ -28,5 +28,7 @@ confinement:
   enabled: true
   # Radius in blocks from the world spawn point.
   radius: 32
-  # Re-sent on an interval so it stays visible in a busy chat.
-  reminder-seconds: 60
+  # How often the "link your account" action bar may re-appear while a
+  # player pushes against the boundary. Movement fires every tick, so this
+  # is a throttle rather than a schedule.
+  reminder-seconds: 2

@@ -11,7 +11,8 @@ public record WardenConfig(
         Duration syncInterval,
         Duration maxStale,
         boolean confinementEnabled,
-        double confinementRadius) {
+        double confinementRadius,
+        Duration confinementReminder) {
 
     public static WardenConfig from(FileConfiguration c) {
         return new WardenConfig(
@@ -21,6 +22,7 @@ public record WardenConfig(
                 Duration.ofSeconds(c.getLong("sync.interval-seconds", 300)),
                 Duration.ofHours(c.getLong("fallback.max-stale-hours", 24)),
                 c.getBoolean("confinement.enabled", true),
-                c.getDouble("confinement.radius", 32));
+                c.getDouble("confinement.radius", 32),
+                Duration.ofSeconds(c.getLong("confinement.reminder-seconds", 2)));
     }
 }
