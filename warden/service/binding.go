@@ -42,6 +42,49 @@ func IsManagedGroup(luckPermsGroup string) bool {
 	return strings.HasPrefix(luckPermsGroup, ManagedGroupPrefix)
 }
 
+// ManagedGroup is a LuckPerms group Warden owns, described well enough for
+// the plugin to create it. Deliberately not the binding row: the plugin has
+// no use for ids, authorship or timestamps, and narrowing the payload keeps
+// Warden's internals out of the game server.
+type ManagedGroup struct {
+	Name        string   `json:"name"`
+	SourceGroup string   `json:"source_group"`
+	Permissions []string `json:"permissions"`
+	Weight      int      `json:"weight"`
+}
+
+// ManagedGroups returns every LuckPerms group the bindings imply.
+//
+// The plugin needs this because LuckPerms will not invent a group for it:
+// getGroup returns null and loadGroup an empty Optional for one that does
+// not exist, and adding a player to a nonexistent parent group stores an
+// inheritance node that silently resolves to nothing. So the plugin must
+// create and populate each group before assigning anybody to one.
+//
+// The list is exhaustive, which is what lets the plugin garbage collect:
+// any group carrying ManagedGroupPrefix that is absent here belongs to a
+// binding that has been deleted.
+func ManagedGroups() ([]ManagedGroup, error) {
+	bindings, err := ListBindings()
+	if err != nil {
+		return nil, err
+	}
+	groups := make([]ManagedGroup, 0, len(bindings))
+	for _, b := range bindings {
+		perms := b.Permissions
+		if perms == nil {
+			perms = []string{}
+		}
+		groups = append(groups, ManagedGroup{
+			Name:        b.LuckPermsGroup,
+			SourceGroup: b.GroupName,
+			Permissions: perms,
+			Weight:      b.Weight,
+		})
+	}
+	return groups, nil
+}
+
 func ListBindings() ([]model.GroupPermissionBinding, error) {
 	bindings := []model.GroupPermissionBinding{}
 	if err := database.DB.Order("weight desc, group_name asc").Find(&bindings).Error; err != nil {

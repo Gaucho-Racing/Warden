@@ -105,11 +105,25 @@ func MarkPlayerSeen(c *gin.Context) {
 }
 
 // SyncAllPlayers is the reconcile sweep's endpoint: the full desired state
-// for every linked account in one response. The plugin diffs this against
+// of the permission system in one response. The plugin diffs it against
 // what LuckPerms currently holds and corrects the difference, which is how
 // a revocation lands without waiting for the player to rejoin.
+//
+// Apply groups before players. LuckPerms will not create a group on demand,
+// and adding somebody to one that does not exist stores an inheritance node
+// that resolves to nothing — no error anywhere, just a player missing every
+// permission the portal says they have.
+//
+// Both lists are exhaustive, so the plugin can garbage collect too: a group
+// carrying managed_group_prefix but absent from groups belongs to a deleted
+// binding, and a managed group absent from a player's entry was revoked.
 func SyncAllPlayers(c *gin.Context) {
 	Require(c, RequestIsPlugin(c))
+	groups, err := service.ManagedGroups()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	resolved, err := service.ResolveAll(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
@@ -117,6 +131,7 @@ func SyncAllPlayers(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"managed_group_prefix": service.ManagedGroupPrefix,
+		"groups":               groups,
 		"players":              resolved,
 	})
 }
