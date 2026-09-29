@@ -30,11 +30,11 @@ func LoginWithSentinel(c *gin.Context) {
 func GetSession(c *gin.Context) {
 	Require(c, RequestTokenExists(c))
 	c.JSON(http.StatusOK, gin.H{
-		"entity_id": GetRequestTokenEntityID(c),
-		"user_id":   GetRequestTokenUserID(c),
-		"scope":     GetRequestTokenScopes(c),
-		"groups":    GetRequestTokenGroupNames(c),
-		"is_admin":  RequestUserIsAdmin(c),
+		"entity_id":          GetRequestTokenEntityID(c),
+		"user_id":            GetRequestTokenUserID(c),
+		"scope":              GetRequestTokenScopes(c),
+		"groups":             GetRequestTokenGroupNames(c),
+		"is_minecraft_admin": RequestUserIsMinecraftAdmin(c),
 	})
 }
 

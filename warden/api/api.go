@@ -14,15 +14,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const (
-	// AdminGroup is the org-wide administrator group.
-	AdminGroup = "Admins"
-	// MinecraftAdminGroup gates Warden's server-administration surface:
-	// the group-to-permission bindings and the roster of linked players.
-	// Deliberately separate from Admins so running the game server does not
-	// require org-wide admin, and vice versa.
-	MinecraftAdminGroup = "MinecraftAdmins"
-)
+// MinecraftAdminGroup gates Warden's entire server-administration surface:
+// bindings, the player roster, and the audit log. It is the only privileged
+// group Warden knows about — org-wide Admins deliberately grants nothing
+// here, because running the game server is not the same job.
+const MinecraftAdminGroup = "MinecraftAdmins"
 
 func Run() {
 	api := InitializeRouter()
@@ -223,19 +219,8 @@ func RequestTokenHasGroupName(c *gin.Context, groupName string) bool {
 	return false
 }
 
-func RequestUserIsAdmin(c *gin.Context) bool {
-	return RequestTokenHasGroupName(c, AdminGroup)
-}
-
-// RequestUserIsMinecraftAdmin reports membership of the Minecraft admin
-// group. Org admins are included: locking someone out of the server console
-// because they are only in Admins would be surprising, and an org admin can
-// add themselves to MinecraftAdmins anyway.
 func RequestUserIsMinecraftAdmin(c *gin.Context) bool {
-	return Any(
-		RequestTokenHasGroupName(c, MinecraftAdminGroup),
-		RequestTokenHasGroupName(c, AdminGroup),
-	)
+	return RequestTokenHasGroupName(c, MinecraftAdminGroup)
 }
 
 func RequestTokenCanManageBindings(c *gin.Context) bool {

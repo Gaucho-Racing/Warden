@@ -4,11 +4,8 @@ import { api } from "@/lib/api"
 
 const SESSION_KEY = "warden_session"
 
-// Mirrors api.AdminGroup on the server. The server is the authority — this
-// only decides what the UI bothers to render.
-export const ADMIN_GROUP = "Admins"
-// Mirrors api.MinecraftAdminGroup. Org admins are included server-side too;
-// this only decides what the UI bothers to render.
+// Mirrors api.MinecraftAdminGroup. The server is the authority — this only
+// decides what the UI bothers to render.
 export const MINECRAFT_ADMIN_GROUP = "MinecraftAdmins"
 
 export type Session = {
@@ -95,10 +92,7 @@ export function useAuth() {
     tokenSession,
     isLoading: userQuery.isLoading,
     isAuthenticated: !!tokenSession,
-    isAdmin: !!userQuery.data?.groups?.includes(ADMIN_GROUP),
-    isMinecraftAdmin: !!userQuery.data?.groups?.some(
-      (g) => g === MINECRAFT_ADMIN_GROUP || g === ADMIN_GROUP,
-    ),
+    isMinecraftAdmin: !!userQuery.data?.groups?.includes(MINECRAFT_ADMIN_GROUP),
     refresh: () => queryClient.invalidateQueries({ queryKey: ["currentUser"] }),
     logout,
   }

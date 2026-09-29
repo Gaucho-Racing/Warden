@@ -97,7 +97,7 @@ func DeleteAccount(c *gin.Context) {
 }
 
 func ListAuditLogs(c *gin.Context) {
-	Require(c, RequestUserIsAdmin(c))
+	Require(c, RequestUserIsMinecraftAdmin(c))
 	logs, err := service.ListAuditLogs(0)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
