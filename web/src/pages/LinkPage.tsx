@@ -3,7 +3,6 @@ import { useState } from "react"
 import { Link, useParams } from "react-router-dom"
 
 import { SkinFrame } from "@/components/SkinFrame"
-import { PixelGrassBlock } from "@/components/icons/pixel"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -148,12 +147,12 @@ export default function LinkPage() {
 function LinkLayout({ children }: { children: React.ReactNode }) {
   return (
     <main className="mc-backdrop flex min-h-svh flex-col items-center justify-center gap-6 px-4 py-12">
+      {/* Sized on height, not width — the wordmark is ~5.8:1 and would
+          otherwise dwarf the square Gaucho Racing mark beside it. */}
       <div className="flex items-center gap-5">
-        <img src="/logo/gr-logo-blank.png" alt="Gaucho Racing" className="size-14" />
-        <span className="font-pixel text-2xl text-white/60 drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)]">
-          ×
-        </span>
-        <PixelGrassBlock className="size-14" />
+        <img src="/logo/gr-logo-blank.png" alt="Gaucho Racing" className="size-12" />
+        <span className="font-pixel text-2xl text-white/50">×</span>
+        <img src="/logo/minecraft.svg" alt="Minecraft" className="h-8" />
       </div>
       <Card className="w-full max-w-md">
         <CardContent className="p-6">{children}</CardContent>
