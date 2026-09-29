@@ -147,12 +147,12 @@ export default function LinkPage() {
 function LinkLayout({ children }: { children: React.ReactNode }) {
   return (
     <main className="mc-backdrop flex min-h-svh flex-col items-center justify-center gap-6 px-4 py-12">
-      {/* Sized on height, not width — the wordmark is ~5.8:1 and would
-          otherwise dwarf the square Gaucho Racing mark beside it. */}
+      {/* Both marks are square, so they can share a size and read as a pair.
+          The wordmark this replaced was ~5.8:1 and unbalanced the lockup. */}
       <div className="flex items-center gap-5">
         <img src="/logo/gr-logo-blank.png" alt="Gaucho Racing" className="size-12" />
         <span className="font-pixel text-2xl text-white/50">×</span>
-        <img src="/logo/minecraft.svg" alt="Minecraft" className="h-8" />
+        <img src="/logo/minecraft-creeper.svg" alt="Minecraft" className="size-12" />
       </div>
       <Card className="w-full max-w-md">
         <CardContent className="p-6">{children}</CardContent>
