@@ -30,7 +30,7 @@ export default function PlayersPage() {
     <PageContainer>
       <PageHeader
         title="Players"
-        description="Every Minecraft account linked to a Sentinel identity."
+        description="Every Minecraft account linked to a Sentinel account."
         action={
           <Input
             placeholder="Search players"

@@ -28,7 +28,7 @@ export default function LinkPage() {
             <h1 className="font-pixel text-2xl">Account linked</h1>
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{linked.username}</span> is now linked
-              to your Gaucho Racing account. Rejoin{" "}
+              to your Sentinel account. Rejoin{" "}
               <span className="font-mono">{MINECRAFT_SERVER_ADDRESS}</span> to pick up your
               permissions.
             </p>
@@ -85,7 +85,7 @@ export default function LinkPage() {
         <div className="space-y-1 text-center">
           <h1 className="font-pixel text-2xl">Link your Minecraft account</h1>
           <p className="text-sm text-muted-foreground">
-            Confirm this is you, and we&apos;ll connect it to your Gaucho Racing account.
+            Confirm this is you, and we&apos;ll connect it to your Sentinel account.
           </p>
         </div>
 
@@ -148,11 +148,12 @@ export default function LinkPage() {
 function LinkLayout({ children }: { children: React.ReactNode }) {
   return (
     <main className="mc-backdrop flex min-h-svh flex-col items-center justify-center gap-6 px-4 py-12">
-      <div className="flex flex-col items-center gap-2">
-        <PixelGrassBlock className="size-11" />
-        <span className="font-display text-[0.95rem] text-white drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)]">
-          WARDEN
+      <div className="flex items-center gap-5">
+        <img src="/logo/gr-logo-blank.png" alt="Gaucho Racing" className="size-14" />
+        <span className="font-pixel text-2xl text-white/60 drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)]">
+          ×
         </span>
+        <PixelGrassBlock className="size-14" />
       </div>
       <Card className="w-full max-w-md">
         <CardContent className="p-6">{children}</CardContent>

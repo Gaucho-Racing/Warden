@@ -104,6 +104,21 @@ const GEAR = [
   "............",
 ]
 
+const HOUSE = [
+  "............",
+  ".....XX.....",
+  "....XXXX....",
+  "...XXXXXX...",
+  "..XXXXXXXX..",
+  ".XXXXXXXXXX.",
+  "..XX....XX..",
+  "..XX.XX.XX..",
+  "..XX.XX.XX..",
+  "..XXXXXXXX..",
+  "............",
+  "............",
+]
+
 const mono = { X: "currentColor" }
 
 export function PixelHead(props: SVGProps<SVGSVGElement>) {
@@ -112,6 +127,10 @@ export function PixelHead(props: SVGProps<SVGSVGElement>) {
 
 export function PixelHeads(props: SVGProps<SVGSVGElement>) {
   return <PixelArt grid={HEADS} palette={mono} {...props} />
+}
+
+export function PixelHouse(props: SVGProps<SVGSVGElement>) {
+  return <PixelArt grid={HOUSE} palette={mono} {...props} />
 }
 
 export function PixelKey(props: SVGProps<SVGSVGElement>) {

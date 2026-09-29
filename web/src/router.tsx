@@ -1,9 +1,10 @@
-import { Navigate, createBrowserRouter } from "react-router-dom"
+import { createBrowserRouter } from "react-router-dom"
 
 import { AppShell } from "@/components/AppShell"
 import { RequireAuth } from "@/components/RequireAuth"
 import AccountPage from "@/pages/AccountPage"
 import BindingsPage from "@/pages/BindingsPage"
+import HomePage from "@/pages/HomePage"
 import LinkPage from "@/pages/LinkPage"
 import LoginPage from "@/pages/LoginPage"
 import NotFoundPage from "@/pages/NotFoundPage"
@@ -21,7 +22,7 @@ export const router = createBrowserRouter([
       {
         element: <AppShell />,
         children: [
-          { path: "/", element: <Navigate to="/account" replace /> },
+          { path: "/", element: <HomePage /> },
           { path: "/account", element: <AccountPage /> },
           { path: "/players", element: <PlayersPage /> },
           { path: "/bindings", element: <BindingsPage /> },

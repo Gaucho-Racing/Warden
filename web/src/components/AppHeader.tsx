@@ -5,6 +5,7 @@ import {
   PixelGear,
   PixelGrassBlock,
   PixelHead,
+  PixelHouse,
   PixelHeads,
   PixelKey,
 } from "@/components/icons/pixel"
@@ -23,6 +24,7 @@ import { useAuth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 
 const mobileItems = [
+  { to: "/", label: "Home", icon: PixelHouse, adminOnly: false },
   { to: "/account", label: "My Account", icon: PixelHead, adminOnly: false },
   { to: "/players", label: "Players", icon: PixelHeads, adminOnly: true },
   { to: "/bindings", label: "Bindings", icon: PixelKey, adminOnly: true },
@@ -30,6 +32,7 @@ const mobileItems = [
 ]
 
 function sectionTitle(pathname: string) {
+  if (pathname === "/") return "Home"
   if (pathname.startsWith("/settings")) return "Settings"
   if (pathname.startsWith("/bindings")) return "Bindings"
   if (pathname.startsWith("/players")) return "Players"
@@ -111,7 +114,10 @@ export function AppHeader() {
             .filter((item) => !item.adminOnly || isAdmin)
             .map((item) => (
               <DropdownMenuItem key={item.to} asChild>
-                <Link to={item.to} className={cn(pathname.startsWith(item.to) && "text-primary")}>
+                <Link to={item.to} className={cn(
+                    (item.to === "/" ? pathname === "/" : pathname.startsWith(item.to)) &&
+                      "text-primary",
+                  )}>
                   <item.icon className="size-4 shrink-0" />
                   {item.label}
                 </Link>
@@ -120,7 +126,7 @@ export function AppHeader() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Link to="/account" className="flex items-center gap-2 lg:hidden">
+      <Link to="/" className="flex items-center gap-2 lg:hidden">
         <PixelGrassBlock className="size-6" />
         <span className="font-display text-[0.8rem]">WARDEN</span>
       </Link>

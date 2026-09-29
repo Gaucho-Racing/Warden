@@ -57,6 +57,34 @@ export type SentinelGroup = {
   member_count: number
 }
 
+export type BlockCount = {
+  block: string
+  count: number
+}
+
+export type StatWindow = {
+  playtime_minutes: number
+  deaths: number
+  mob_kills: number
+  blocks_mined: number
+}
+
+export type PlayerStats = {
+  uuid: string
+  username: string
+  source: "mock" | "plugin"
+  playtime_minutes: number
+  deaths: number
+  mob_kills: number
+  blocks_mined: number
+  distance_meters: number
+  join_count: number
+  first_seen: string
+  last_seen: string
+  top_blocks: BlockCount[]
+  last_7_days?: StatWindow
+}
+
 export type AuditLog = {
   id: string
   action: string
@@ -165,6 +193,22 @@ export function useDeleteBinding() {
       await api.delete(`/bindings/${id}`)
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bindings"] }),
+  })
+}
+
+export function useMyStats() {
+  return useQuery({
+    queryKey: ["stats", "@me"],
+    queryFn: async () => {
+      try {
+        return (await api.get<PlayerStats>("/stats/@me")).data
+      } catch (error) {
+        // No linked account is the onboarding state, not a failure.
+        if (isNotFound(error)) return null
+        throw error
+      }
+    },
+    retry: false,
   })
 }
 

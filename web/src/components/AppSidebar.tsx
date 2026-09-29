@@ -4,6 +4,7 @@ import {
   PixelGear,
   PixelGrassBlock,
   PixelHead,
+  PixelHouse,
   PixelHeads,
   PixelKey,
 } from "@/components/icons/pixel"
@@ -11,6 +12,7 @@ import { useAuth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 
 const navItems = [
+  { to: "/", label: "Home", icon: PixelHouse, adminOnly: false },
   { to: "/account", label: "My Account", icon: PixelHead, adminOnly: false },
   { to: "/players", label: "Players", icon: PixelHeads, adminOnly: true },
   { to: "/bindings", label: "Bindings", icon: PixelKey, adminOnly: true },
@@ -18,6 +20,8 @@ const navItems = [
 ]
 
 function isActive(currentPath: string, target: string) {
+  // "/" is only ever active on exactly "/" — as a prefix it matches everything.
+  if (target === "/") return currentPath === "/"
   return currentPath === target || currentPath.startsWith(`${target}/`)
 }
 

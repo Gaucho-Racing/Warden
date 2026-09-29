@@ -19,7 +19,7 @@ export default function AccountPage() {
     <PageContainer>
       <PageHeader
         title="My Account"
-        description="The Minecraft account connected to your Gaucho Racing identity."
+        description="The Minecraft account connected to your Sentinel account."
       />
 
       {account.isLoading && <Skeleton className="h-32 w-full rounded-xl" />}

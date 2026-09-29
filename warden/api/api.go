@@ -59,6 +59,9 @@ func InitializeRoutes(router *gin.Engine) {
 	router.GET("/accounts/:uuid", GetAccount)
 	router.DELETE("/accounts/:uuid", DeleteAccount)
 
+	router.GET("/stats/@me", GetMyStats)
+	router.GET("/stats/:uuid", GetPlayerStats)
+
 	router.GET("/link/:token", GetLinkToken)
 	router.POST("/link/:token", ConsumeLinkToken)
 
