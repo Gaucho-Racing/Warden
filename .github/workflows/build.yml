@@ -1,5 +1,5 @@
 name: build
-run-name: Check warden and web builds
+run-name: Check warden, web and plugin builds
 
 on:
   push:
@@ -81,3 +81,4 @@ jobs:
 
           wait_for_workflow "warden" "warden.yml"
           wait_for_workflow "web" "web.yml"
+          wait_for_workflow "plugin" "plugin.yml"

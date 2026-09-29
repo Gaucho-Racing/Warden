@@ -1,0 +1,32 @@
+# Where the Warden service lives. In production this is the kerbecs gateway,
+# which fronts both the API and the link portal.
+warden:
+  base-url: "http://localhost:10310"
+  # Bearer for /api/plugin/*. Generate with `openssl rand -hex 32` and set the
+  # same value as PLUGIN_TOKEN on the service.
+  token: ""
+  # Per-request timeout. Kept short because a join blocks on the prelogin
+  # lookup and a player is waiting.
+  timeout-seconds: 5
+
+sync:
+  # Full reconcile interval. Cheap: one request that returns every managed
+  # group and every linked player.
+  interval-seconds: 300
+
+# What to do when Warden cannot be reached.
+#
+# Permissions resolved from a successful call are cached to disk. Within
+# max-stale-hours a player keeps the last known set, so a Warden outage does
+# not strip everyone's access mid-session. Past that window the cache is
+# treated as untrustworthy and the player is treated as unlinked.
+fallback:
+  max-stale-hours: 24
+
+# Unlinked players join normally but are confined to spawn until they link.
+confinement:
+  enabled: true
+  # Radius in blocks from the world spawn point.
+  radius: 32
+  # Re-sent on an interval so it stays visible in a busy chat.
+  reminder-seconds: 60

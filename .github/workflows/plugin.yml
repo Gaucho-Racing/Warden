@@ -1,0 +1,40 @@
+name: plugin
+run-name: Triggered by ${{ github.event_name }} to ${{ github.ref }} by @${{ github.actor }}
+
+on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build jar
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Paper 26.2 requires Java 25 at minimum.
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+          cache-dependency-path: plugin/pom.xml
+
+      - name: Build
+        working-directory: plugin
+        run: ./mvnw -B --no-transfer-progress clean package
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: warden-plugin
+          path: plugin/target/Warden-*.jar
+          if-no-files-found: error

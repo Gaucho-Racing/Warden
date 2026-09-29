@@ -1,0 +1,25 @@
+name: Warden
+version: '${project.version}'
+main: com.gauchoracing.warden.WardenPlugin
+api-version: '26.2'
+description: Links Minecraft accounts to Sentinel and applies group-derived permissions
+authors: [Gaucho Racing]
+website: https://github.com/Gaucho-Racing/Warden
+
+# Hard depend. Warden has nothing to apply permissions with if LuckPerms is
+# absent, so failing to load is more honest than running as a no-op.
+depend: [LuckPerms]
+
+commands:
+  warden:
+    description: Warden admin commands
+    usage: /warden <sync|status>
+    permission: warden.admin
+  link:
+    description: Get a link to connect your Minecraft account to Sentinel
+    usage: /link
+
+permissions:
+  warden.admin:
+    description: Run Warden administrative commands
+    default: op

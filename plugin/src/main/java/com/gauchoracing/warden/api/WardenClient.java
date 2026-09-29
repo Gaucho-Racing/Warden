@@ -1,0 +1,121 @@
+package com.gauchoracing.warden.api;
+
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.UUID;
+
+/**
+ * Talks to the Warden service.
+ *
+ * <p>Every method blocks. None of them may be called from the main server
+ * thread — a slow reply would stall the whole server. Callers use
+ * {@code AsyncPlayerPreLoginEvent}, which already runs off-thread, or the
+ * async scheduler.
+ */
+public final class WardenClient {
+
+    /** The service returns snake_case; records here are camelCase. */
+    private static final Gson GSON = new GsonBuilder()
+            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+            .create();
+
+    private final HttpClient http;
+    private final String baseUrl;
+    private final String token;
+
+    public WardenClient(String baseUrl, String token, Duration timeout) {
+        this.baseUrl = baseUrl.replaceAll("/+$", "");
+        this.token = token;
+        this.http = HttpClient.newBuilder().connectTimeout(timeout).build();
+    }
+
+    /** Full desired state: every managed group and every linked player. */
+    public SyncSnapshot sync() throws IOException, InterruptedException {
+        return get("/api/plugin/sync", SyncSnapshot.class);
+    }
+
+    /**
+     * One player's desired state. An unlinked player is a 200, not a 404 —
+     * see {@link ResolvedPermissions}.
+     */
+    public ResolvedPermissions player(UUID uuid, String username)
+            throws IOException, InterruptedException {
+        return get(
+                "/api/plugin/players/" + uuid + "?username=" + enc(username),
+                ResolvedPermissions.class);
+    }
+
+    /** Mints a pending link for a player Mojang has already authenticated. */
+    public LinkToken createLinkToken(UUID uuid, String username)
+            throws IOException, InterruptedException {
+        String body = GSON.toJson(new LinkRequest(uuid.toString(), username));
+        return send(
+                HttpRequest.newBuilder(URI.create(baseUrl + "/api/plugin/link-tokens"))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8)),
+                LinkToken.class);
+    }
+
+    /**
+     * Records that a UUID was seen and refreshes the cached username.
+     * Separate from the permission read so that read stays side-effect free
+     * and freely retryable.
+     */
+    public void markSeen(UUID uuid, String username) throws IOException, InterruptedException {
+        send(
+                HttpRequest.newBuilder(
+                                URI.create(
+                                        baseUrl
+                                                + "/api/plugin/players/"
+                                                + uuid
+                                                + "/seen?username="
+                                                + enc(username)))
+                        .POST(HttpRequest.BodyPublishers.noBody()),
+                null);
+    }
+
+    private <T> T get(String path, Class<T> type) throws IOException, InterruptedException {
+        return send(HttpRequest.newBuilder(URI.create(baseUrl + path)).GET(), type);
+    }
+
+    private <T> T send(HttpRequest.Builder builder, Class<T> type)
+            throws IOException, InterruptedException {
+        HttpRequest request = builder.header("Authorization", "Bearer " + token)
+                .header("Accept", "application/json")
+                .build();
+        HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
+        int status = response.statusCode();
+        if (status < 200 || status >= 300) {
+            throw new WardenApiException(status, response.body());
+        }
+        return type == null ? null : GSON.fromJson(response.body(), type);
+    }
+
+    private static String enc(String value) {
+        return java.net.URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
+    }
+
+    private record LinkRequest(String uuid, String username) {}
+
+    /** Non-2xx from the service. Carries the status so callers can tell 409 from 502. */
+    public static final class WardenApiException extends IOException {
+        private final int status;
+
+        WardenApiException(int status, String body) {
+            super("warden returned " + status + ": " + body);
+            this.status = status;
+        }
+
+        public int status() {
+            return status;
+        }
+    }
+}
