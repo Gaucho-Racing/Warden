@@ -85,6 +85,18 @@
   image-rendering: pixelated;
 }
 
+/* An inventory slot: a recessed well for a portrait or an item. Carries its
+   own bevel values because the global pair is tuned for large panels and
+   nearly vanishes at a 32px avatar against a near-black header. */
+@utility mc-slot {
+  --mc-bevel-light: #45454f;
+  --mc-bevel-dark: #000000;
+  background-color: #0c0c0f;
+  box-shadow:
+    inset 2px 2px 0 0 var(--mc-bevel-dark),
+    inset -2px -2px 0 0 var(--mc-bevel-light);
+}
+
 /* Sculk glow, for the Warden mark and primary emphasis. */
 @utility mc-glow {
   filter: drop-shadow(0 0 6px color-mix(in oklab, var(--color-mc-sculk-glow) 55%, transparent));
@@ -167,9 +179,4 @@
     font-family: var(--font-pixel);
   }
 
-  /* Player skins are 8x8 source art; smoothing them breaks the illusion. */
-  [data-slot="avatar"],
-  [data-slot="avatar-image"] {
-    image-rendering: pixelated;
-  }
 }

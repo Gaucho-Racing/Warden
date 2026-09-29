@@ -3,6 +3,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 
 import { PageContainer, PageHeader } from "@/components/PageContainer"
+import { SkinFrame } from "@/components/SkinFrame"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -62,11 +63,7 @@ export default function PlayersPage() {
         {rows.map((account) => (
           <Card key={account.uuid}>
             <CardContent className="flex flex-wrap items-center gap-4 p-4">
-              <img
-                src={account.avatar_url}
-                alt={account.username}
-                className="mc-bevel-thin size-11"
-              />
+              <SkinFrame src={account.avatar_url} alt={account.username} className="size-12" />
               <div className="min-w-0 flex-1">
                 <div className="font-pixel text-lg leading-tight">{account.username}</div>
                 <div className="font-mono text-xs text-muted-foreground">{account.uuid}</div>

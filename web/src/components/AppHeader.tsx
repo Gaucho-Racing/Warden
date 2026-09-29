@@ -56,10 +56,12 @@ function HeaderUserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-2">
-          <Avatar className="size-8 cursor-pointer">
-            <AvatarImage src={user.avatar_url} alt={name} />
-            <AvatarFallback>{initials(name)}</AvatarFallback>
-          </Avatar>
+          <span className="mc-slot inline-flex p-[3px]">
+            <Avatar className="size-8 cursor-pointer">
+              <AvatarImage src={user.avatar_url} alt={name} />
+              <AvatarFallback className="font-pixel text-xs">{initials(name)}</AvatarFallback>
+            </Avatar>
+          </span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={10} className="w-56">

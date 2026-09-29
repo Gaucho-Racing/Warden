@@ -3,6 +3,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 
 import { PageContainer, PageHeader } from "@/components/PageContainer"
+import { SkinFrame } from "@/components/SkinFrame"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -38,10 +39,10 @@ export default function AccountPage() {
       {account.data && (
         <Card>
           <CardContent className="flex flex-wrap items-center gap-4 p-6">
-            <img
+            <SkinFrame
               src={account.data.avatar_url}
               alt={account.data.username}
-              className="mc-bevel-thin size-16"
+              className="size-16"
             />
             <div className="min-w-0 flex-1">
               <div className="font-pixel text-xl">{account.data.username}</div>

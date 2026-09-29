@@ -2,6 +2,7 @@ import { ArrowRight, CheckCircle2, Loader2, ShieldAlert } from "lucide-react"
 import { useState } from "react"
 import { Link, useParams } from "react-router-dom"
 
+import { SkinFrame } from "@/components/SkinFrame"
 import { WardenMark } from "@/components/icons/pixel"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -90,11 +91,7 @@ export default function LinkPage() {
 
         <div className="flex items-center justify-center gap-4">
           <div className="flex flex-col items-center gap-2">
-            <img
-              src={preview.avatar_url}
-              alt={preview.username}
-              className="mc-bevel-thin size-16"
-            />
+            <SkinFrame src={preview.avatar_url} alt={preview.username} className="size-16" />
             <div className="text-center">
               <div className="font-pixel text-base">{preview.username}</div>
               <div className="font-mono text-[10px] text-muted-foreground">
