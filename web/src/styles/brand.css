@@ -14,10 +14,6 @@
   --color-mc-grass: #5fa83d;
   --color-mc-gold: #fcdc5f;
   --color-mc-redstone: #c8372c;
-  /* Sculk — the Warden's own colors, used as the primary action color. */
-  --color-mc-sculk: #0f7a7a;
-  --color-mc-sculk-glow: #22d3d3;
-  --color-mc-sculk-deep: #0b2b2e;
 
   --font-sans: "Geist Variable", sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, monospace;
@@ -95,11 +91,6 @@
   box-shadow:
     inset 2px 2px 0 0 var(--mc-bevel-dark),
     inset -2px -2px 0 0 var(--mc-bevel-light);
-}
-
-/* Sculk glow, for the Warden mark and primary emphasis. */
-@utility mc-glow {
-  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--color-mc-sculk-glow) 55%, transparent));
 }
 
 /* ---------------------------------------------------------------------

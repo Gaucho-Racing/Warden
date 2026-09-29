@@ -1,8 +1,13 @@
 import { Link, useLocation } from "react-router-dom"
 
-import { PixelGear, PixelHead, PixelHeads, PixelKey, WardenMark } from "@/components/icons/pixel"
+import {
+  PixelGear,
+  PixelGrassBlock,
+  PixelHead,
+  PixelHeads,
+  PixelKey,
+} from "@/components/icons/pixel"
 import { useAuth } from "@/lib/auth"
-import { MINECRAFT_SERVER_ADDRESS } from "@/lib/links"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -22,14 +27,9 @@ export function AppSidebar() {
 
   return (
     <aside className="hidden border-r-4 border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex lg:min-h-svh lg:flex-col">
-      <div className="flex h-20 items-center gap-3 border-b-4 border-sidebar-border px-4">
-        <WardenMark className="size-10 shrink-0 mc-glow" />
-        <div className="min-w-0">
-          <div className="font-display text-[0.7rem] leading-none tracking-tight">WARDEN</div>
-          <div className="mt-1.5 font-mono text-[0.6rem] text-muted-foreground">
-            {MINECRAFT_SERVER_ADDRESS}
-          </div>
-        </div>
+      <div className="flex h-16 items-center gap-3 border-b-4 border-sidebar-border px-4">
+        <PixelGrassBlock className="size-7 shrink-0" />
+        <div className="font-display text-[0.9rem] leading-none tracking-tight">WARDEN</div>
       </div>
 
       <nav className="flex-1 space-y-1.5 p-3">

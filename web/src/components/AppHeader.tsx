@@ -1,7 +1,13 @@
 import { LogOut, Menu, Settings } from "lucide-react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 
-import { PixelGear, PixelHead, PixelHeads, PixelKey, WardenMark } from "@/components/icons/pixel"
+import {
+  PixelGear,
+  PixelGrassBlock,
+  PixelHead,
+  PixelHeads,
+  PixelKey,
+} from "@/components/icons/pixel"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -90,7 +96,7 @@ export function AppHeader() {
   const section = sectionTitle(pathname)
 
   return (
-    <header className="sticky top-0 z-30 flex h-20 items-center gap-3 border-b-4 border-border bg-background px-4 lg:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b-4 border-border bg-background px-4 lg:px-6">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon" className="lg:hidden">
@@ -115,8 +121,8 @@ export function AppHeader() {
       </DropdownMenu>
 
       <Link to="/account" className="flex items-center gap-2 lg:hidden">
-        <WardenMark className="size-8" />
-        <span className="font-display text-[0.65rem]">WARDEN</span>
+        <PixelGrassBlock className="size-6" />
+        <span className="font-display text-[0.8rem]">WARDEN</span>
       </Link>
 
       <div className="hidden min-w-0 lg:block">

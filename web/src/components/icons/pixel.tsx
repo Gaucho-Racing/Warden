@@ -44,31 +44,6 @@ function PixelArt({
   )
 }
 
-// The Warden: deepslate body, sculk-cyan sensor patches where a face would
-// be, and the glowing rib line across its chest.
-const WARDEN = [
-  "................",
-  "................",
-  "...B........B...",
-  "...B........B...",
-  "..BBBBBBBBBBBB..",
-  "..BBBBBBBBBBBB..",
-  "..BGGBBBBBBGGB..",
-  "..BGGBBBBBBGGB..",
-  "..BBBBBBBBBBBB..",
-  "..BBBBBBBBBBBB..",
-  "..BBGGGGGGGGBB..",
-  "..BBBBBBBBBBBB..",
-  "..BBBBBBBBBBBB..",
-  "...BBBBBBBBBB...",
-  "................",
-  "................",
-]
-
-export function WardenMark(props: SVGProps<SVGSVGElement>) {
-  return <PixelArt grid={WARDEN} palette={{ B: "var(--warden-body)", G: "var(--warden-glow)" }} {...props} />
-}
-
 const HEAD = [
   "............",
   ".XXXXXXXXXX.",
@@ -148,25 +123,38 @@ export function PixelGear(props: SVGProps<SVGSVGElement>) {
 }
 
 const GRASS_BLOCK = [
-  "GGGGGGGGGGGG",
-  "GgGGgGGGgGGG",
-  "GGGgGGGgGGgG",
-  "gGGGGgGGGGGg",
-  "DdDDDdDDdDDD",
-  "DDdDDDDdDDdD",
-  "dDDDdDDDDdDD",
-  "DDDdDDdDDDDd",
-  "DdDDDDDdDDDD",
-  "DDDDdDDDDDdD",
-  "dDDdDDDdDDDD",
-  "DDDDDDDDDDDD",
+  "HHHHHHHHHHHHHHHH",
+  "GgGGGGGGGGgGGggG",
+  "GgGGggGGgggGgGGG",
+  "GGgGgGggGGGgGGGG",
+  "DDGGGdDdDggGdgdD",
+  "dDGDdDDDdDdDDdDG",
+  "DDdDddDdddDDDdDD",
+  "dDdDDdDdDDDdddDD",
+  "DDDDDDDDDDDDdDDd",
+  "DDDDDDDDDDDDDDDD",
+  "DDDddDDDDdDdDdDD",
+  "DDDDDDDddDdDDddD",
+  "DDdDDDDdDDDDDDDD",
+  "DDDdDDDDDDDdDDDD",
+  "DDDdDDdDDddDDDDD",
+  "SSSSSSSSSSSSSSSS",
 ]
 
+// The app's brand mark. H and S are the lit top and shadowed base edges,
+// which give the tile the same hard depth as the GUI bevels.
 export function PixelGrassBlock(props: SVGProps<SVGSVGElement>) {
   return (
     <PixelArt
       grid={GRASS_BLOCK}
-      palette={{ G: "#5fa83d", g: "#4e8f32", D: "#866043", d: "#6f4f37" }}
+      palette={{
+        H: "#7cc95a",
+        G: "#5fa83d",
+        g: "#4e8f32",
+        D: "#866043",
+        d: "#6f4f37",
+        S: "#4f3827",
+      }}
       {...props}
     />
   )

@@ -3,7 +3,7 @@ import { useState } from "react"
 import { Link, useParams } from "react-router-dom"
 
 import { SkinFrame } from "@/components/SkinFrame"
-import { WardenMark } from "@/components/icons/pixel"
+import { PixelGrassBlock } from "@/components/icons/pixel"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -149,8 +149,8 @@ function LinkLayout({ children }: { children: React.ReactNode }) {
   return (
     <main className="mc-backdrop flex min-h-svh flex-col items-center justify-center gap-6 px-4 py-12">
       <div className="flex flex-col items-center gap-2">
-        <WardenMark className="size-14 mc-glow" />
-        <span className="font-display text-[0.7rem] text-white drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)]">
+        <PixelGrassBlock className="size-11" />
+        <span className="font-display text-[0.95rem] text-white drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)]">
           WARDEN
         </span>
       </div>
