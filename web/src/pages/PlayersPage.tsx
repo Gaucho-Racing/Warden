@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { errorMessage, skinURL, useAccounts, useUnlinkAccount } from "@/lib/warden"
+import { errorMessage, useAccounts, useUnlinkAccount } from "@/lib/warden"
 
 export default function PlayersPage() {
   const accounts = useAccounts()
@@ -63,7 +63,7 @@ export default function PlayersPage() {
           <Card key={account.uuid}>
             <CardContent className="flex flex-wrap items-center gap-4 p-4">
               <img
-                src={skinURL(account.uuid)}
+                src={account.avatar_url}
                 alt={account.username}
                 className="mc-bevel-thin size-11"
               />

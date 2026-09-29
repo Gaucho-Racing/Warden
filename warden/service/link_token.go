@@ -90,6 +90,7 @@ func ConsumeLinkToken(id string, entityID string) (model.MinecraftAccount, error
 
 	account := model.MinecraftAccount{
 		UUID:             token.UUID,
+		AvatarURL:        model.AvatarURL(token.UUID),
 		EntityID:         entityID,
 		Username:         token.Username,
 		LinkedViaTokenID: token.ID,

@@ -36,7 +36,7 @@ func GetLinkToken(c *gin.Context) {
 		Token:     token.ID,
 		UUID:      token.UUID,
 		Username:  token.Username,
-		AvatarURL: service.AvatarURL(token.UUID),
+		AvatarURL: model.AvatarURL(token.UUID),
 		ExpiresAt: token.ExpiresAt.UTC().Format("2006-01-02T15:04:05Z"),
 	})
 }

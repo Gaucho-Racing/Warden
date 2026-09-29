@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { MINECRAFT_SERVER_ADDRESS } from "@/lib/links"
-import { errorMessage, skinURL, useMyAccount, useUnlinkAccount } from "@/lib/warden"
+import { errorMessage, useMyAccount, useUnlinkAccount } from "@/lib/warden"
 
 export default function AccountPage() {
   const account = useMyAccount()
@@ -39,7 +39,7 @@ export default function AccountPage() {
         <Card>
           <CardContent className="flex flex-wrap items-center gap-4 p-6">
             <img
-              src={skinURL(account.data.uuid)}
+              src={account.data.avatar_url}
               alt={account.data.username}
               className="mc-bevel-thin size-16"
             />

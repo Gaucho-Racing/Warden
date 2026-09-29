@@ -36,9 +36,3 @@ func ValidateUsername(raw string) (string, error) {
 	}
 	return value, nil
 }
-
-// AvatarURL returns a rendered head for a UUID, used by the web portal and
-// by the Discord relay so a Minecraft player shows up as themselves.
-func AvatarURL(uuid string) string {
-	return "https://mc-heads.net/avatar/" + uuid
-}

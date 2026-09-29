@@ -15,6 +15,7 @@ export type MinecraftAccount = {
   username: string
   linked_via_token_id: string
   last_seen_at: string
+  avatar_url: string
   created_at: string
   updated_at: string
   identity?: Identity
@@ -172,10 +173,6 @@ export function useAuditLogs() {
     queryKey: ["audit-logs"],
     queryFn: async () => (await api.get<AuditLog[]>("/audit-logs")).data,
   })
-}
-
-export function skinURL(uuid: string) {
-  return `https://mc-heads.net/avatar/${uuid}`
 }
 
 export function errorMessage(error: unknown, fallback: string) {
