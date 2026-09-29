@@ -1,84 +1,119 @@
 package service
 
 import (
-	"hash/fnv"
-	"math/rand"
-	"sort"
+	"errors"
 	"time"
 
+	"github.com/gaucho-racing/warden/warden/database"
 	"github.com/gaucho-racing/warden/warden/model"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
-// minedBlocks is the pool the mock draws from — the blocks a survival player
-// actually racks up counts on, so the chart looks plausible.
-var minedBlocks = []string{
-	"minecraft:stone", "minecraft:deepslate", "minecraft:dirt", "minecraft:cobblestone",
-	"minecraft:oak_log", "minecraft:iron_ore", "minecraft:coal_ore", "minecraft:sand",
-	"minecraft:gravel", "minecraft:diamond_ore", "minecraft:andesite", "minecraft:granite",
-}
+// snapshotRetention bounds the history table. Long enough for any window the
+// portal shows, short enough that the table stays trivial.
+const snapshotRetention = 120 * 24 * time.Hour
 
-// MockPlayerStats fabricates a plausible stat line for a UUID.
+var ErrStatsNotFound = errors.New("no stats reported for this player")
+
+// RecordPlayerStats stores a report from the plugin and, if this is the
+// first report of the UTC day, snapshots the counters.
 //
-// PLACEHOLDER. Seeded from the UUID so a given player's numbers are stable
-// across reloads — random-per-request values make the UI impossible to judge
-// and look broken. Replace wholesale once the plugin reports real counters;
-// the return shape is the contract and should not need to change.
-func MockPlayerStats(uuid string, username string) model.PlayerStats {
-	h := fnv.New64a()
-	_, _ = h.Write([]byte(uuid))
-	rnd := rand.New(rand.NewSource(int64(h.Sum64())))
+// Snapshot-on-ingest rather than on a schedule: a snapshot only needs to
+// exist for days somebody played, and there is no cron to fail quietly.
+func RecordPlayerStats(stats model.PlayerStats) error {
+	stats.ReportedAt = time.Now()
+	if stats.LastSeen.IsZero() {
+		stats.LastSeen = stats.ReportedAt
+	}
 
-	playtime := 240 + rnd.Intn(14_000)
-	mined := 1_200 + rnd.Intn(48_000)
-	now := time.Now()
-
-	blocks := append([]string(nil), minedBlocks...)
-	rnd.Shuffle(len(blocks), func(i, j int) { blocks[i], blocks[j] = blocks[j], blocks[i] })
-	top := make([]model.BlockCount, 0, 6)
-	remaining := mined
-	for i := 0; i < 6; i++ {
-		// Each entry takes a shrinking slice of what's left, which produces
-		// the long-tailed shape a real mined tally has.
-		count := remaining / (3 + i)
-		if count < 1 {
-			count = 1
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		// FirstSeen is set once and never moved forward by a later report.
+		var existing model.PlayerStats
+		err := tx.Where("uuid = ?", stats.UUID).First(&existing).Error
+		if err == nil && !existing.FirstSeen.IsZero() {
+			stats.FirstSeen = existing.FirstSeen
+		} else if stats.FirstSeen.IsZero() {
+			stats.FirstSeen = stats.ReportedAt
 		}
-		top = append(top, model.BlockCount{Block: blocks[i], Count: count})
-		remaining -= count
-	}
-	sort.Slice(top, func(i, j int) bool { return top[i].Count > top[j].Count })
 
-	return model.PlayerStats{
-		UUID:            uuid,
-		Username:        username,
-		Source:          model.StatSourceMock,
-		PlaytimeMinutes: playtime,
-		Deaths:          rnd.Intn(80),
-		MobKills:        60 + rnd.Intn(3_000),
-		BlocksMined:     mined,
-		DistanceMeters:  5_000 + rnd.Intn(900_000),
-		JoinCount:       5 + rnd.Intn(300),
-		FirstSeen:       now.AddDate(0, 0, -(30 + rnd.Intn(300))),
-		LastSeen:        now.Add(-time.Duration(rnd.Intn(72)) * time.Hour),
-		TopBlocks:       top,
-		Last7Days: &model.StatWindow{
-			PlaytimeMinutes: rnd.Intn(600),
-			Deaths:          rnd.Intn(6),
-			MobKills:        rnd.Intn(180),
-			BlocksMined:     rnd.Intn(4_000),
-		},
-	}
+		if err := tx.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "uuid"}},
+			UpdateAll: true,
+		}).Create(&stats).Error; err != nil {
+			return err
+		}
+
+		day := stats.ReportedAt.UTC().Truncate(24 * time.Hour)
+		snapshot := model.PlayerStatsSnapshot{
+			UUID:               stats.UUID,
+			Day:                day,
+			PlayerStatCounters: stats.PlayerStatCounters,
+		}
+		// DoNothing, not UpdateAll: the snapshot should record where the
+		// player stood at the start of the day, so the first report wins.
+		if err := tx.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "uuid"}, {Name: "day"}},
+			DoNothing: true,
+		}).Create(&snapshot).Error; err != nil {
+			return err
+		}
+
+		return tx.Where("day < ?", time.Now().Add(-snapshotRetention)).
+			Delete(&model.PlayerStatsSnapshot{}).Error
+	})
 }
 
 // PlayerStatsForUUID returns the stat line for a linked account.
+//
+// A linked player who has never been reported on comes back as a zeroed row
+// marked StatSourceNone, so the portal can say the stats have not arrived
+// yet rather than presenting zeroes as fact.
 func PlayerStatsForUUID(uuid string) (model.PlayerStats, error) {
 	account, err := GetAccountByUUID(uuid)
 	if err != nil {
 		return model.PlayerStats{}, err
 	}
-	stats := MockPlayerStats(account.UUID, account.Username)
-	if !account.LastSeenAt.IsZero() {
-		stats.LastSeen = account.LastSeenAt
+
+	var stats model.PlayerStats
+	err = database.DB.Where("uuid = ?", uuid).First(&stats).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return model.PlayerStats{
+			UUID:     account.UUID,
+			Username: account.Username,
+			Source:   model.StatSourceNone,
+		}, nil
 	}
+	if err != nil {
+		return model.PlayerStats{}, err
+	}
+
+	stats.Source = model.StatSourcePlugin
+	stats.Last7Days = windowSince(uuid, stats, 7*24*time.Hour)
 	return stats, nil
+}
+
+// windowSince subtracts the newest snapshot at or before the cutoff.
+//
+// Returns nil rather than a zeroed window when there is no snapshot old
+// enough: a player three days into their first week has no 7-day history,
+// and reporting "+0" there would be a claim rather than an absence.
+func windowSince(uuid string, current model.PlayerStats, age time.Duration) *model.StatWindow {
+	cutoff := time.Now().UTC().Add(-age).Truncate(24 * time.Hour)
+
+	var past model.PlayerStatsSnapshot
+	err := database.DB.Where("uuid = ? AND day <= ?", uuid, cutoff).
+		Order("day desc").
+		First(&past).Error
+	if err != nil {
+		return nil
+	}
+
+	return &model.StatWindow{
+		PlaytimeMinutes: current.PlaytimeMinutes - past.PlaytimeMinutes,
+		Deaths:          current.Deaths - past.Deaths,
+		MobKills:        current.MobKills - past.MobKills,
+		BlocksMined:     current.BlocksMined - past.BlocksMined,
+		DistanceMeters:  current.DistanceMeters - past.DistanceMeters,
+	}
 }

@@ -82,6 +82,7 @@ func InitializeRoutes(router *gin.Engine) {
 	router.POST("/plugin/link-tokens", IssueLinkToken)
 	router.GET("/plugin/players/:uuid", GetPlayerPermissions)
 	router.POST("/plugin/players/:uuid/seen", MarkPlayerSeen)
+	router.POST("/plugin/players/:uuid/stats", ReportPlayerStats)
 	router.GET("/plugin/sync", SyncAllPlayers)
 }
 

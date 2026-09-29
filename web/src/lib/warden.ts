@@ -57,8 +57,8 @@ export type SentinelGroup = {
   member_count: number
 }
 
-export type BlockCount = {
-  block: string
+export type Counted = {
+  key: string
   count: number
 }
 
@@ -67,21 +67,34 @@ export type StatWindow = {
   deaths: number
   mob_kills: number
   blocks_mined: number
+  distance_meters: number
 }
 
 export type PlayerStats = {
   uuid: string
   username: string
-  source: "mock" | "plugin"
+  /** "none" means linked but never reported on — not zeroes as fact. */
+  source: "plugin" | "none"
   playtime_minutes: number
   deaths: number
   mob_kills: number
+  player_kills: number
   blocks_mined: number
+  items_crafted: number
   distance_meters: number
-  join_count: number
+  damage_dealt: number
+  damage_taken: number
+  jumps: number
+  times_slept: number
+  villager_trades: number
+  raid_wins: number
+  sessions: number
+  top_blocks: Counted[]
+  top_mobs: Counted[]
+  top_crafted: Counted[]
   first_seen: string
   last_seen: string
-  top_blocks: BlockCount[]
+  reported_at: string
   last_7_days?: StatWindow
 }
 

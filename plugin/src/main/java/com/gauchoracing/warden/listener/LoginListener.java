@@ -99,8 +99,14 @@ public final class LoginListener implements Listener {
         }
     }
 
+    /**
+     * Statistics are gathered here, while the player object is still live
+     * and on the main thread. Anything later would be reading a stale or
+     * absent player.
+     */
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
+        plugin.statsReporter().report(event.getPlayer());
         state.forget(event.getPlayer().getUniqueId());
     }
 

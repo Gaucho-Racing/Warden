@@ -82,6 +82,20 @@ public final class WardenClient {
                 null);
     }
 
+    /**
+     * Reports a player's statistics. Whole-state, not increments — Minecraft
+     * keeps running totals, so a duplicated or replayed report is harmless.
+     */
+    public void reportStats(UUID uuid, Object report) throws IOException, InterruptedException {
+        String body = GSON.toJson(report);
+        send(
+                HttpRequest.newBuilder(
+                                URI.create(baseUrl + "/api/plugin/players/" + uuid + "/stats"))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8)),
+                null);
+    }
+
     private <T> T get(String path, Class<T> type) throws IOException, InterruptedException {
         return send(HttpRequest.newBuilder(URI.create(baseUrl + path)).GET(), type);
     }

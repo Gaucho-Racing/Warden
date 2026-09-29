@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 import { PageContainer } from "@/components/PageContainer"
 import { SkinFrame } from "@/components/SkinFrame"
 import { StatTile } from "@/components/StatTile"
-import { TopBlocksChart } from "@/components/TopBlocksChart"
+import { TopCountsChart } from "@/components/TopCountsChart"
 import { PixelGrassBlock } from "@/components/icons/pixel"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -48,6 +48,7 @@ export default function HomePage() {
   if (!stats.data) return <GetStarted />
 
   const s = stats.data
+  if (s.source === "none") return <AwaitingStats username={s.username} />
   const hours = Math.floor(s.playtime_minutes / 60)
   const firstName = user?.first_name || user?.username || "there"
 
@@ -68,11 +69,9 @@ export default function HomePage() {
             .
           </p>
         </div>
-        {s.source === "mock" && (
-          <Badge variant="secondary" className="shrink-0">
-            Mock data
-          </Badge>
-        )}
+        <Badge variant="secondary" className="shrink-0">
+          {s.sessions.toLocaleString()} session{s.sessions === 1 ? "" : "s"}
+        </Badge>
       </div>
 
       {/* Hero figure — the one number the page leads with. */}
@@ -86,9 +85,6 @@ export default function HomePage() {
             </div>
           </div>
           <div className="text-right text-xs text-muted-foreground">
-            <div>
-              {s.join_count.toLocaleString()} session{s.join_count === 1 ? "" : "s"}
-            </div>
             <div className="mt-1">
               Since{" "}
               {new Date(s.first_seen).toLocaleDateString(undefined, {
@@ -106,11 +102,7 @@ export default function HomePage() {
           value={compact(s.blocks_mined)}
           delta={s.last_7_days?.blocks_mined}
         />
-        <StatTile
-          label="Mob kills"
-          value={compact(s.mob_kills)}
-          delta={s.last_7_days?.mob_kills}
-        />
+        <StatTile label="Mob kills" value={compact(s.mob_kills)} delta={s.last_7_days?.mob_kills} />
         <StatTile
           label="Deaths"
           value={compact(s.deaths)}
@@ -121,15 +113,55 @@ export default function HomePage() {
           label="Distance travelled"
           value={compact(Math.round(s.distance_meters / 1000))}
           unit="km"
+          delta={
+            s.last_7_days ? Math.round(s.last_7_days.distance_meters / 1000) : undefined
+          }
         />
+        <StatTile label="Items crafted" value={compact(s.items_crafted)} />
+        <StatTile label="Jumps" value={compact(s.jumps)} />
+        <StatTile label="Nights slept" value={compact(s.times_slept)} />
+        <StatTile label="Villager trades" value={compact(s.villager_trades)} />
       </div>
 
-      <Card className="mt-4">
-        <CardContent className="p-6">
-          <h2 className="mb-4 font-pixel text-xl">Most mined blocks</h2>
-          <TopBlocksChart blocks={s.top_blocks} />
-        </CardContent>
-      </Card>
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <Card className="lg:col-span-2">
+          <CardContent className="p-6">
+            <h2 className="mb-4 font-pixel text-xl">Most mined blocks</h2>
+            <TopCountsChart counts={s.top_blocks} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <h2 className="mb-4 font-pixel text-xl">Most killed mobs</h2>
+            <TopCountsChart counts={s.top_mobs} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <h2 className="mb-4 font-pixel text-xl">Most crafted items</h2>
+            <TopCountsChart counts={s.top_crafted} />
+          </CardContent>
+        </Card>
+      </div>
+    </PageContainer>
+  )
+}
+
+/**
+ * Linked, but the plugin has never reported. Distinct from unlinked and
+ * from a genuine run of zeroes.
+ */
+function AwaitingStats({ username }: { username: string }) {
+  return (
+    <PageContainer>
+      <div className="mx-auto max-w-xl text-center">
+        <PixelGrassBlock className="mx-auto size-14" />
+        <h1 className="mt-4 font-pixel text-2xl">No stats yet</h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          {username} is linked, but the server hasn&apos;t reported any statistics. They appear
+          after your next session on {MINECRAFT_SERVER_ADDRESS}.
+        </p>
+      </div>
     </PageContainer>
   )
 }

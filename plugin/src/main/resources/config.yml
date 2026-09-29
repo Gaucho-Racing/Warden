@@ -14,6 +14,17 @@ sync:
   # group and every linked player.
   interval-seconds: 300
 
+stats:
+  enabled: true
+  # How often the online players' statistics are reported. Also reported on
+  # quit, so this only matters for long uninterrupted sessions.
+  #
+  # Gathering walks every material twice (mined, crafted) and every living
+  # entity type, which is a few thousand map lookups per player. That is
+  # microseconds, but it happens on the main thread because Bukkit entity
+  # access is not thread safe, so there is no reason to run it often.
+  interval-seconds: 600
+
 # Fail closed. If Warden is unreachable a player still joins, but with no
 # managed groups and confined to spawn — the same as being unlinked. Nothing
 # is cached, so an outage pens the whole server at spawn until Warden is

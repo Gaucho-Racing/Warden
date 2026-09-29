@@ -4,6 +4,7 @@ import com.gauchoracing.warden.api.WardenClient;
 import com.gauchoracing.warden.listener.ConfinementListener;
 import com.gauchoracing.warden.listener.LoginListener;
 import com.gauchoracing.warden.permissions.LuckPermsApplier;
+import com.gauchoracing.warden.stats.StatsReporter;
 import com.gauchoracing.warden.task.SyncTask;
 import java.util.Objects;
 import net.luckperms.api.LuckPerms;
@@ -16,6 +17,7 @@ public final class WardenPlugin extends JavaPlugin {
     private WardenClient client;
     private LuckPermsApplier applier;
     private SyncTask syncTask;
+    private StatsReporter statsReporter;
 
     /**
      * Mirrors service.ManagedGroupPrefix. Seeded with the compiled-in value
@@ -65,6 +67,7 @@ public final class WardenPlugin extends JavaPlugin {
         Objects.requireNonNull(getCommand("warden")).setExecutor(command);
         Objects.requireNonNull(getCommand("link")).setExecutor(command);
 
+        statsReporter = new StatsReporter(this);
         syncTask = new SyncTask(this, state);
         long ticks = config.syncInterval().toSeconds() * 20L;
         // Run once shortly after boot so the managed groups exist before the
@@ -75,6 +78,18 @@ public final class WardenPlugin extends JavaPlugin {
                 5,
                 config.syncInterval().toSeconds(),
                 java.util.concurrent.TimeUnit.SECONDS);
+
+        if (config.statsEnabled()) {
+            // Gathering touches player objects, so it runs on the main
+            // thread; StatsReporter hops async for the HTTP itself.
+            getServer()
+                    .getGlobalRegionScheduler()
+                    .runAtFixedRate(
+                            this,
+                            scheduled -> statsReporter.reportOnline(),
+                            config.statsInterval().toSeconds() * 20L,
+                            config.statsInterval().toSeconds() * 20L);
+        }
 
         getLogger().info("Warden enabled against " + config.baseUrl()
                 + " (sync every " + ticks / 20 + "s)");
@@ -94,6 +109,10 @@ public final class WardenPlugin extends JavaPlugin {
 
     public LuckPermsApplier applier() {
         return applier;
+    }
+
+    public StatsReporter statsReporter() {
+        return statsReporter;
     }
 
     public SyncTask syncTask() {

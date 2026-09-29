@@ -36,6 +36,8 @@ func Init() {
 		&model.LinkToken{},
 		&model.GroupPermissionBinding{},
 		&model.AuditLog{},
+		&model.PlayerStats{},
+		&model.PlayerStatsSnapshot{},
 	); err != nil {
 		logger.SugarLogger.Fatalf("failed to run database migrations: %v", err)
 		return
