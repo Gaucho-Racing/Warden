@@ -33,52 +33,48 @@ public final class LoginListener implements Listener {
      *
      * <p>This event runs off the main thread, which is the only reason
      * blocking HTTP and blocking LuckPerms calls are legal here. The player
-     * is already authenticated by Mojang at this point, so the UUID is
-     * trustworthy.
+     * is already authenticated by Mojang, so the UUID is trustworthy.
      *
-     * <p>Warden being unreachable never denies the login. The player falls
-     * back to their cached permissions, and to unlinked if there is no
-     * usable cache — a permissions service outage should not be an outage
-     * of the game server.
+     * <p>Warden being unreachable never denies the login, but it is treated
+     * as unlinked: no managed groups, and confined to spawn. That is a
+     * deliberate fail-closed posture — if Warden cannot say who somebody is,
+     * nobody roams. An outage therefore pens the whole server at spawn,
+     * which is the intended behaviour rather than a side effect.
      */
     @EventHandler(priority = EventPriority.LOW)
     public void onPreLogin(AsyncPlayerPreLoginEvent event) {
         UUID uuid = event.getUniqueId();
         String username = event.getName();
 
-        List<String> groups;
-        boolean linked;
+        ResolvedPermissions resolved;
         try {
-            ResolvedPermissions resolved = plugin.client().player(uuid, username);
-            linked = resolved.linked();
-            groups = resolved.luckpermsGroups();
-            plugin.cache().put(uuid, groups);
+            resolved = plugin.client().player(uuid, username);
         } catch (Exception e) {
-            List<String> cached = plugin.cache().get(uuid);
-            if (cached == null) {
+            plugin.getLogger()
+                    .warning("Warden: could not resolve " + username
+                            + ", confining to spawn with no managed groups ("
+                            + e.getMessage() + ")");
+            state.markUnlinked(uuid);
+            try {
+                plugin.applier().applyPlayer(uuid, List.of(), plugin.managedGroupPrefix());
+            } catch (Exception applyFailure) {
                 plugin.getLogger()
-                        .warning("Warden: unreachable and no usable cache for " + username
-                                + "; joining unlinked (" + e.getMessage() + ")");
-                groups = List.of();
-                linked = false;
-            } else {
-                plugin.getLogger()
-                        .warning("Warden: unreachable, using cached permissions for " + username
-                                + " (" + e.getMessage() + ")");
-                groups = cached;
-                linked = true;
+                        .severe("Warden: failed to strip permissions for " + username + ": "
+                                + applyFailure.getMessage());
             }
+            return;
         }
 
         try {
-            plugin.applier().applyPlayer(uuid, groups, plugin.managedGroupPrefix());
+            plugin.applier()
+                    .applyPlayer(uuid, resolved.luckpermsGroups(), plugin.managedGroupPrefix());
         } catch (Exception e) {
             plugin.getLogger()
                     .severe("Warden: failed to apply permissions for " + username + ": "
                             + e.getMessage());
         }
 
-        if (linked) {
+        if (resolved.linked()) {
             state.markLinked(uuid);
         } else {
             state.markUnlinked(uuid);

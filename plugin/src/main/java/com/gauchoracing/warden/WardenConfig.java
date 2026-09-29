@@ -9,7 +9,6 @@ public record WardenConfig(
         String token,
         Duration timeout,
         Duration syncInterval,
-        Duration maxStale,
         boolean confinementEnabled,
         double confinementRadius,
         Duration confinementReminder) {
@@ -20,7 +19,6 @@ public record WardenConfig(
                 c.getString("warden.token", ""),
                 Duration.ofSeconds(c.getLong("warden.timeout-seconds", 5)),
                 Duration.ofSeconds(c.getLong("sync.interval-seconds", 300)),
-                Duration.ofHours(c.getLong("fallback.max-stale-hours", 24)),
                 c.getBoolean("confinement.enabled", true),
                 c.getDouble("confinement.radius", 32),
                 Duration.ofSeconds(c.getLong("confinement.reminder-seconds", 2)));

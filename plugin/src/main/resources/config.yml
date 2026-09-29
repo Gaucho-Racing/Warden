@@ -14,14 +14,11 @@ sync:
   # group and every linked player.
   interval-seconds: 300
 
-# What to do when Warden cannot be reached.
-#
-# Permissions resolved from a successful call are cached to disk. Within
-# max-stale-hours a player keeps the last known set, so a Warden outage does
-# not strip everyone's access mid-session. Past that window the cache is
-# treated as untrustworthy and the player is treated as unlinked.
-fallback:
-  max-stale-hours: 24
+# Fail closed. If Warden is unreachable a player still joins, but with no
+# managed groups and confined to spawn — the same as being unlinked. Nothing
+# is cached, so an outage pens the whole server at spawn until Warden is
+# back. That is deliberate: if Warden cannot say who somebody is, nobody
+# roams.
 
 # Unlinked players join normally but are confined to spawn until they link.
 confinement:

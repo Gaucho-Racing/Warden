@@ -53,7 +53,6 @@ public final class SyncTask implements Runnable {
                 plugin.applier()
                         .applyPlayer(player.uuid(), player.luckpermsGroups(),
                                 snapshot.managedGroupPrefix());
-                plugin.cache().put(player.uuid(), player.luckpermsGroups());
                 state.markLinked(player.uuid());
                 applied++;
             } catch (Exception e) {
@@ -61,7 +60,6 @@ public final class SyncTask implements Runnable {
                         + e.getMessage());
             }
         }
-        plugin.cache().save();
         plugin.getLogger().info("Warden: sync applied " + snapshot.groups().size()
                 + " groups and " + applied + " players");
     }

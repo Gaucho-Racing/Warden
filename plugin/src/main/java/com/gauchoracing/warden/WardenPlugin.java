@@ -4,7 +4,6 @@ import com.gauchoracing.warden.api.WardenClient;
 import com.gauchoracing.warden.listener.ConfinementListener;
 import com.gauchoracing.warden.listener.LoginListener;
 import com.gauchoracing.warden.permissions.LuckPermsApplier;
-import com.gauchoracing.warden.permissions.PermissionCache;
 import com.gauchoracing.warden.task.SyncTask;
 import java.util.Objects;
 import net.luckperms.api.LuckPerms;
@@ -16,7 +15,6 @@ public final class WardenPlugin extends JavaPlugin {
     private WardenConfig config;
     private WardenClient client;
     private LuckPermsApplier applier;
-    private PermissionCache cache;
     private SyncTask syncTask;
 
     /**
@@ -49,12 +47,6 @@ public final class WardenPlugin extends JavaPlugin {
 
         client = new WardenClient(config.baseUrl(), config.token(), config.timeout());
         applier = new LuckPermsApplier(luckPerms, getLogger());
-        cache = new PermissionCache(
-                getDataFolder().toPath().resolve("permission-cache.json"),
-                config.maxStale(),
-                getLogger());
-        cache.load();
-
         PlayerState state = new PlayerState();
         LoginListener loginListener = new LoginListener(this, state);
         getServer().getPluginManager().registerEvents(loginListener, this);
@@ -88,13 +80,6 @@ public final class WardenPlugin extends JavaPlugin {
                 + " (sync every " + ticks / 20 + "s)");
     }
 
-    @Override
-    public void onDisable() {
-        if (cache != null) {
-            cache.save();
-        }
-    }
-
     public void runAsync(Runnable runnable) {
         getServer().getAsyncScheduler().runNow(this, scheduled -> runnable.run());
     }
@@ -109,10 +94,6 @@ public final class WardenPlugin extends JavaPlugin {
 
     public LuckPermsApplier applier() {
         return applier;
-    }
-
-    public PermissionCache cache() {
-        return cache;
     }
 
     public SyncTask syncTask() {
