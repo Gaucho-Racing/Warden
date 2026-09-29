@@ -5,8 +5,8 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { api } from "@/lib/api"
 import { clearSession, saveSession } from "@/lib/auth"
 
-const sentinelURL = import.meta.env.VITE_SENTINEL_URL ?? "https://sso.gauchoracing.com"
-const sentinelClientID = import.meta.env.VITE_SENTINEL_CLIENT_ID ?? ""
+const sentinelURL = import.meta.env.VITE_SENTINEL_URL || "https://sso.gauchoracing.com"
+const sentinelClientID = import.meta.env.VITE_SENTINEL_CLIENT_ID || ""
 const oauthScope = "user:read groups:read"
 
 type TokenResponse = {

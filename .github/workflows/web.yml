@@ -51,6 +51,11 @@ jobs:
         with:
           context: web
           platforms: ${{ matrix.platform }}
+          # Only emitted when the repo variable is actually set. Passing
+          # `VITE_SENTINEL_CLIENT_ID=` unconditionally would override the
+          # Dockerfile's default with an empty string and ship a bundle whose
+          # authorize URL has no client_id, which is the failure this guards.
+          build-args: ${{ vars.VITE_SENTINEL_CLIENT_ID && format('VITE_SENTINEL_CLIENT_ID={0}', vars.VITE_SENTINEL_CLIENT_ID) || '' }}
           outputs: type=image,name=ghcr.io/gaucho-racing/warden-web,push-by-digest=true,name-canonical=true,push=true
           cache-from: |
             type=gha,scope=build-${{ github.workflow }}-${{ steps.platform.outputs.pair }}-${{ github.ref_name }}
