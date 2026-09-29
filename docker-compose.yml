@@ -1,0 +1,81 @@
+services:
+  kerbecs:
+    container_name: warden-kerbecs
+    image: bk1031/kerbecs:latest
+    restart: always
+    ports:
+      - "127.0.0.1:10310:10310"
+    volumes:
+      - ./kerbecs.yaml:/etc/kerbecs/kerbecs.yaml:ro
+    environment:
+      KERBECS_CONFIG: /etc/kerbecs/kerbecs.yaml
+    depends_on:
+      - warden
+      - web
+
+  warden:
+    container_name: warden-warden
+    build:
+      context: ./warden
+      dockerfile: Dockerfile.dev
+    restart: always
+    working_dir: /app
+    ports:
+      - "127.0.0.1:9999:9999"
+    volumes:
+      - ./warden:/app
+      - warden_gopath:/go
+    depends_on:
+      - db
+    environment:
+      ENV: DEV
+      PORT: 9999
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: password
+      DATABASE_NAME: warden
+      PUBLIC_BASE_URL: http://localhost:10310
+      PLUGIN_TOKEN: ${PLUGIN_TOKEN}
+      LINK_TOKEN_TTL: ${LINK_TOKEN_TTL}
+      GROUP_SYNC_INTERVAL: ${GROUP_SYNC_INTERVAL}
+      SENTINEL_URL: ${SENTINEL_URL}
+      SENTINEL_CLIENT_ID: ${SENTINEL_CLIENT_ID}
+      SENTINEL_CLIENT_SECRET: ${SENTINEL_CLIENT_SECRET}
+      SENTINEL_REDIRECT_URI: ${SENTINEL_REDIRECT_URI}
+      SENTINEL_SA_TOKEN: ${SENTINEL_SA_TOKEN}
+
+  web:
+    container_name: warden-web
+    image: node:22-alpine
+    restart: always
+    working_dir: /app
+    command: >
+      sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - ./web:/app
+      - web_node_modules:/app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:10310
+      VITE_SENTINEL_URL: ${SENTINEL_URL}
+      VITE_SENTINEL_CLIENT_ID: ${SENTINEL_CLIENT_ID}
+
+  db:
+    container_name: warden-db
+    image: postgres:18-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: warden
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+
+volumes:
+  warden_gopath:
+  web_node_modules:
+  pgdata:
