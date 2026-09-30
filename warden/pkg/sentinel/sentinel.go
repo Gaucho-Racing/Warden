@@ -148,6 +148,20 @@ func GetEntityGroups(ctx context.Context, accessToken string, entityID string) (
 	return groups, err
 }
 
+// GetEntityIDByExternalAuth returns the entity linked to an external account,
+// such as a Discord user ID. Sentinel answers 404, surfaced as an Error with
+// Code 404, when nobody has linked that account.
+func GetEntityIDByExternalAuth(ctx context.Context, accessToken string, provider string, externalID string) (string, error) {
+	var entity struct {
+		ID string `json:"id"`
+	}
+	path := "/api/core/entity/external/" + url.PathEscape(provider) + "/" + url.PathEscape(externalID)
+	if err := get(ctx, accessToken, path, &entity); err != nil {
+		return "", err
+	}
+	return entity.ID, nil
+}
+
 // GetGroupMembers returns every member of a group. The reconcile sweep uses
 // this instead of GetEntityGroups per player: one call per bound group beats
 // one call per linked account once there are more players than bindings.

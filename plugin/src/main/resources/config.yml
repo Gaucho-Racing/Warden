@@ -44,3 +44,8 @@ confinement:
   # Shown to linked players without warden.play, in chat on join and in the
   # action bar when they hit a restriction. Name the group that grants it.
   no-access-message: "You must be a member of the MinecraftPlayers group to play on this server!"
+
+# Discord chat bridge. The bot and channel are configured on the Warden
+# service; this only decides whether the plugin connects to it.
+bridge:
+  enabled: true

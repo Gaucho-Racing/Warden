@@ -3,6 +3,8 @@ module github.com/gaucho-racing/warden/warden
 go 1.26
 
 require (
+	github.com/bwmarrin/discordgo v0.29.0
+	github.com/coder/websocket v1.8.15
 	github.com/fatih/color v1.18.0
 	github.com/gaucho-racing/ulid-go v1.1.0
 	github.com/gin-contrib/cors v1.7.6
@@ -24,6 +26,7 @@ require (
 	github.com/go-playground/validator/v10 v10.27.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/goccy/go-yaml v1.18.0 // indirect
+	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/pgx/v5 v5.6.0 // indirect

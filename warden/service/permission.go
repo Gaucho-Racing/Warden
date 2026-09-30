@@ -129,6 +129,12 @@ func ResolveAll(ctx context.Context) ([]ResolvedPermissions, error) {
 	return results, nil
 }
 
+// FirstName is the in-game first name for one entity, or "" if Sentinel has
+// none or cannot be reached.
+func FirstName(ctx context.Context, entityID string) string {
+	return displayNames(ctx, []string{entityID})[entityID]
+}
+
 // displayNames maps entity IDs to the first name shown in game. Cosmetic, so a
 // Sentinel failure is logged and the plugin falls back to Minecraft names
 // rather than failing the resolve. Sentinel only exposes the combined name

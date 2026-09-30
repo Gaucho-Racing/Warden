@@ -14,7 +14,8 @@ public record WardenConfig(
         boolean confinementEnabled,
         double confinementRadius,
         Duration confinementReminder,
-        String noAccessMessage) {
+        String noAccessMessage,
+        boolean bridgeEnabled) {
 
     private static final String DEFAULT_NO_ACCESS_MESSAGE =
             "You must be a member of the MinecraftPlayers group to play on this server!";
@@ -30,6 +31,7 @@ public record WardenConfig(
                 c.getBoolean("confinement.enabled", true),
                 c.getDouble("confinement.radius", 32),
                 Duration.ofSeconds(c.getLong("confinement.reminder-seconds", 2)),
-                c.getString("confinement.no-access-message", DEFAULT_NO_ACCESS_MESSAGE));
+                c.getString("confinement.no-access-message", DEFAULT_NO_ACCESS_MESSAGE),
+                c.getBoolean("bridge.enabled", true));
     }
 }

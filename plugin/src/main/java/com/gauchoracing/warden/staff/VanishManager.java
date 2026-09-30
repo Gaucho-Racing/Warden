@@ -40,6 +40,10 @@ public final class VanishManager implements CommandExecutor, Listener {
         this.plugin = plugin;
     }
 
+    public boolean isVanished(UUID uuid) {
+        return vanished.contains(uuid);
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) {
