@@ -96,6 +96,7 @@ func InitializeRoutes(router *gin.Engine) {
 	router.GET("/accounts/:uuid", GetAccount)
 	router.DELETE("/accounts/:uuid", DeleteAccount)
 
+	router.GET("/server/status", GetServerStatus)
 	router.GET("/stats/@me", GetMyStats)
 	router.GET("/stats/:uuid", GetPlayerStats)
 

@@ -31,6 +31,8 @@ public final class ServerStatusReporter implements Listener {
     record ServerStatus(int online, int maxPlayers, int uniquePlayers, double tps, double mspt,
             long startedAt) {}
 
+    private record Stopping(boolean stopping) {}
+
     public ServerStatusReporter(WardenPlugin plugin, VanishManager vanish) {
         this.plugin = plugin;
         this.vanish = vanish;
@@ -53,6 +55,20 @@ public final class ServerStatusReporter implements Listener {
                 plugin.client().reportServerStatus(status);
             } catch (Exception e) {
                 plugin.getLogger().fine("Warden: server status report failed: " + Errors.describe(e));
+            }
+        });
+    }
+
+    /**
+     * Tells Warden the server is going down so it shows as offline straight
+     * away. Queued on the plugin's IO executor, which onDisable drains.
+     */
+    public void reportStopping() {
+        plugin.runAsync(() -> {
+            try {
+                plugin.client().reportServerStatus(new Stopping(true));
+            } catch (Exception e) {
+                plugin.getLogger().fine("Warden: stopping report failed: " + Errors.describe(e));
             }
         });
     }
