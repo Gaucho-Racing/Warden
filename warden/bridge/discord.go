@@ -221,8 +221,8 @@ func (b *Bridge) execute(params *discordgo.WebhookParams) error {
 }
 
 // channelWebhook finds the webhook this bot created earlier, or creates one.
-// Only webhooks we own come back with a token, which is also how ours are
-// told apart from anyone else's in the channel.
+// Ownership is by application_id, so a hand-made webhook that happens to
+// share the name is left alone. A bot's application ID is its user ID.
 func (b *Bridge) channelWebhook() (*discordgo.Webhook, error) {
 	b.webhookMu.Lock()
 	defer b.webhookMu.Unlock()
@@ -233,8 +233,9 @@ func (b *Bridge) channelWebhook() (*discordgo.Webhook, error) {
 	if err != nil {
 		return nil, err
 	}
+	botID := b.session.State.User.ID
 	for _, hook := range hooks {
-		if hook.Name == webhookName && hook.Token != "" {
+		if hook.Name == webhookName && hook.ApplicationID == botID && hook.Token != "" {
 			b.webhook = hook
 			return hook, nil
 		}
