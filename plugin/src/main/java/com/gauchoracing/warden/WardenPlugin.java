@@ -2,6 +2,7 @@ package com.gauchoracing.warden;
 
 import com.gauchoracing.warden.api.WardenClient;
 import com.gauchoracing.warden.listener.ConfinementListener;
+import com.gauchoracing.warden.listener.DisplayNameListener;
 import com.gauchoracing.warden.listener.GameModeListener;
 import com.gauchoracing.warden.listener.LoginListener;
 import com.gauchoracing.warden.staff.FlyCommand;
@@ -81,6 +82,7 @@ public final class WardenPlugin extends JavaPlugin {
                                 config.noAccessMessage()),
                         this);
         getServer().getPluginManager().registerEvents(new GameModeListener(this, luckPerms), this);
+        getServer().getPluginManager().registerEvents(new DisplayNameListener(), this);
 
         WardenCommand command = new WardenCommand(this, loginListener);
         Objects.requireNonNull(getCommand("warden")).setExecutor(command);
