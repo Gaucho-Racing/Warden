@@ -236,6 +236,41 @@ export function useDeleteBinding() {
   })
 }
 
+// A player's account and stats by UUID, for the player details page. Both
+// answer 404 for a UUID nobody has linked, which the page shows as
+// "not found" rather than an error.
+export function usePlayerAccount(uuid: string | undefined) {
+  return useQuery({
+    queryKey: ["account", uuid],
+    queryFn: async () => {
+      try {
+        return (await api.get<MinecraftAccount>(`/accounts/${uuid}`)).data
+      } catch (error) {
+        if (isNotFound(error)) return null
+        throw error
+      }
+    },
+    enabled: !!uuid,
+    retry: false,
+  })
+}
+
+export function usePlayerStats(uuid: string | undefined) {
+  return useQuery({
+    queryKey: ["stats", uuid],
+    queryFn: async () => {
+      try {
+        return (await api.get<PlayerStats>(`/stats/${uuid}`)).data
+      } catch (error) {
+        if (isNotFound(error)) return null
+        throw error
+      }
+    },
+    enabled: !!uuid,
+    retry: false,
+  })
+}
+
 export function useMyStats() {
   return useQuery({
     queryKey: ["stats", "@me"],

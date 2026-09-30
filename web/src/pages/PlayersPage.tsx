@@ -1,15 +1,12 @@
-import { Loader2, Unlink } from "lucide-react"
 import { useState } from "react"
-import { toast } from "sonner"
+import { Link } from "react-router-dom"
 
 import { PageContainer, PageHeader } from "@/components/PageContainer"
 import { SkinFrame } from "@/components/SkinFrame"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useAuth } from "@/lib/auth"
-import { errorMessage, type MinecraftAccount, useAccounts, useUnlinkAccount } from "@/lib/warden"
+import { errorMessage, type MinecraftAccount, useAccounts } from "@/lib/warden"
 
 function formatPlaytime(minutes: number) {
   const hours = Math.floor(minutes / 60)
@@ -44,8 +41,6 @@ function RosterStat({ label, value }: { label: string; value: string }) {
 
 export default function PlayersPage() {
   const accounts = useAccounts()
-  const unlink = useUnlinkAccount()
-  const { user, isMinecraftAdmin } = useAuth()
   const [filter, setFilter] = useState("")
 
   const term = filter.trim().toLowerCase()
@@ -97,54 +92,34 @@ export default function PlayersPage() {
 
       <div className="space-y-2">
         {rows.map((account) => (
-          <Card key={account.uuid}>
-            <CardContent className="flex flex-wrap items-center gap-4 p-4">
-              <SkinFrame src={account.avatar_url} alt={account.username} className="size-12" />
-              <div className="min-w-0 flex-1">
-                <div className="font-pixel text-lg leading-tight">{account.username}</div>
-                <div className="font-mono text-xs text-muted-foreground">{account.uuid}</div>
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="font-pixel text-base leading-tight">{account.identity?.name ?? account.entity_id}</div>
-                {account.identity?.username && (
-                  <div className="text-xs text-muted-foreground">
-                    @{account.identity.username}
-                  </div>
-                )}
-              </div>
-              <RosterStat
-                label="Playtime"
-                value={account.stats ? formatPlaytime(account.stats.playtime_minutes) : "—"}
-              />
-              <RosterStat
-                label="Sessions"
-                value={account.stats ? account.stats.sessions.toLocaleString() : "—"}
-              />
-              <div className="text-xs text-muted-foreground">{formatLastSeen(seenAt(account))}</div>
-              {/* Mirrors DeleteAccount: admins can unlink anyone, members only themselves. */}
-              {(isMinecraftAdmin || account.entity_id === user?.entity_id) && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  disabled={unlink.isPending}
-                  onClick={() =>
-                    unlink.mutate(account.uuid, {
-                      onSuccess: () => toast.success(`Unlinked ${account.username}`),
-                      onError: (error) =>
-                        toast.error(errorMessage(error, "Could not unlink that account")),
-                    })
-                  }
-                >
-                  {unlink.isPending ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Unlink className="size-4" />
+          <Link key={account.uuid} to={`/players/${account.uuid}`} className="block">
+            <Card className="transition-colors hover:border-primary/60">
+              <CardContent className="flex flex-wrap items-center gap-4 p-4">
+                <SkinFrame src={account.avatar_url} alt={account.username} className="size-12" />
+                <div className="min-w-0 flex-1">
+                  <div className="font-pixel text-lg leading-tight">{account.username}</div>
+                  <div className="font-mono text-xs text-muted-foreground">{account.uuid}</div>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-pixel text-base leading-tight">{account.identity?.name ?? account.entity_id}</div>
+                  {account.identity?.username && (
+                    <div className="text-xs text-muted-foreground">
+                      @{account.identity.username}
+                    </div>
                   )}
-                  <span className="sr-only">Unlink {account.username}</span>
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+                </div>
+                <RosterStat
+                  label="Playtime"
+                  value={account.stats ? formatPlaytime(account.stats.playtime_minutes) : "—"}
+                />
+                <RosterStat
+                  label="Sessions"
+                  value={account.stats ? account.stats.sessions.toLocaleString() : "—"}
+                />
+                <div className="text-xs text-muted-foreground">{formatLastSeen(seenAt(account))}</div>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
     </PageContainer>

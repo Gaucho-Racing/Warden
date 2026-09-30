@@ -52,10 +52,9 @@ func GetAccount(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	// Readable by the owner or an admin — same rule as the list, scoped to
-	// the single row.
-	Require(c, Any(RequestUserIsMinecraftAdmin(c), RequestTokenHasEntityID(c, account.EntityID)))
-	c.JSON(http.StatusOK, account)
+	// Readable by any signed-in member, same as the roster.
+	Require(c, RequestTokenExists(c))
+	c.JSON(http.StatusOK, service.HydrateIdentities(c.Request.Context(), []model.MinecraftAccount{account})[0])
 }
 
 // DeleteAccount unlinks a Minecraft account. Owners can unlink themselves;
