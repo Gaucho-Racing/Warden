@@ -119,7 +119,7 @@ public final class LoginListener implements Listener {
                     .append(Component.text("Your Minecraft account isn't linked yet. ",
                             NamedTextColor.GRAY))
                     .append(Component.text("Click here to link it",
-                                    NamedTextColor.GREEN,
+                                    NamedTextColor.DARK_PURPLE,
                                     TextDecoration.UNDERLINED)
                             .clickEvent(ClickEvent.openUrl(token.url())))
                     .build();
