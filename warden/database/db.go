@@ -38,6 +38,7 @@ func Init() {
 		&model.AuditLog{},
 		&model.PlayerStats{},
 		&model.PlayerStatsSnapshot{},
+		&model.ServerStatus{},
 	); err != nil {
 		logger.SugarLogger.Fatalf("failed to run database migrations: %v", err)
 		return

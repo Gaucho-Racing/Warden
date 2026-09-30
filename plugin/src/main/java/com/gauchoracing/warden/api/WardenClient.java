@@ -89,6 +89,16 @@ public final class WardenClient implements AutoCloseable {
                 null);
     }
 
+    /** Reports one server health sample; see ServerStatusReporter. */
+    public void reportServerStatus(Object status) throws IOException, InterruptedException {
+        String body = GSON.toJson(status);
+        send(
+                HttpRequest.newBuilder(URI.create(baseUrl + "/api/plugin/server/status"))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8)),
+                null);
+    }
+
     /**
      * Reports a player's statistics. Whole-state, not increments — Minecraft
      * keeps running totals, so a duplicated or replayed report is harmless.

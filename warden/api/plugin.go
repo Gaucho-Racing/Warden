@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gaucho-racing/warden/warden/model"
 	"github.com/gaucho-racing/warden/warden/service"
@@ -146,4 +147,39 @@ func normalizePlayer(rawUUID string, rawUsername string) (string, string, error)
 		return "", "", err
 	}
 	return uuid, username, nil
+}
+
+type serverStatusReport struct {
+	Online        int     `json:"online"`
+	MaxPlayers    int     `json:"max_players"`
+	UniquePlayers int     `json:"unique_players"`
+	TPS           float64 `json:"tps"`
+	MSPT          float64 `json:"mspt"`
+	// Epoch milliseconds, as the JVM reports its own start time.
+	StartedAt int64 `json:"started_at"`
+}
+
+// ReportServerStatus ingests the plugin's periodic server health sample. It
+// is recorded whether or not the Discord bridge is running.
+func ReportServerStatus(c *gin.Context) {
+	Require(c, RequestIsPlugin(c))
+	var report serverStatusReport
+	if err := c.ShouldBindJSON(&report); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	status := model.ServerStatus{
+		RecordedAt:    time.Now(),
+		Online:        report.Online,
+		MaxPlayers:    report.MaxPlayers,
+		UniquePlayers: report.UniquePlayers,
+		TPS:           report.TPS,
+		MSPT:          report.MSPT,
+		StartedAt:     time.UnixMilli(report.StartedAt),
+	}
+	if err := service.RecordServerStatus(status); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.Status(http.StatusNoContent)
 }

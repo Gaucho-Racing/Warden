@@ -46,6 +46,7 @@ type Bridge struct {
 	channelID string
 	hub       *Hub
 	outbound  chan outboundMessage
+	presence  presence
 
 	webhookMu sync.Mutex
 	webhook   *discordgo.Webhook
@@ -79,6 +80,7 @@ func Start() {
 		outbound:  make(chan outboundMessage, outboundCapacity),
 	}
 	session.AddHandler(b.onDiscordMessage)
+	session.AddHandler(b.onReady)
 	if err := session.Open(); err != nil {
 		logger.SugarLogger.Errorf("bridge: open Discord gateway: %v", err)
 		return
@@ -91,6 +93,7 @@ func Start() {
 	}
 	b.botID = me.ID
 	go b.deliver()
+	go b.runPresence()
 	current = b
 	logger.SugarLogger.Infof("bridge: connected to Discord, relaying channel %s", b.channelID)
 }
@@ -176,6 +179,7 @@ func (b *Bridge) onGameEvent(event Event) {
 			message.notice = notice("Server started", "", colorJoin)
 		case "stopping":
 			message.notice = notice("Server stopping", "", colorQuit)
+			b.markStopping()
 		}
 	}
 	if message.chat == nil && message.notice == nil {

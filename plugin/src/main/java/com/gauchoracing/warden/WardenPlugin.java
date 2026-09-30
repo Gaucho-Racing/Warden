@@ -7,9 +7,10 @@ import com.gauchoracing.warden.listener.ConfinementListener;
 import com.gauchoracing.warden.listener.DisplayNameListener;
 import com.gauchoracing.warden.listener.GameModeListener;
 import com.gauchoracing.warden.listener.LoginListener;
+import com.gauchoracing.warden.permissions.LuckPermsApplier;
 import com.gauchoracing.warden.staff.FlyCommand;
 import com.gauchoracing.warden.staff.VanishManager;
-import com.gauchoracing.warden.permissions.LuckPermsApplier;
+import com.gauchoracing.warden.stats.ServerStatusReporter;
 import com.gauchoracing.warden.stats.StatsReporter;
 import com.gauchoracing.warden.task.SyncTask;
 import java.time.Duration;
@@ -98,6 +99,10 @@ public final class WardenPlugin extends JavaPlugin {
         VanishManager vanish = new VanishManager(this);
         getServer().getPluginManager().registerEvents(vanish, this);
         Objects.requireNonNull(getCommand("vanish")).setExecutor(vanish);
+
+        ServerStatusReporter serverStatus = new ServerStatusReporter(this, vanish);
+        getServer().getPluginManager().registerEvents(serverStatus, this);
+        getServer().getGlobalRegionScheduler().runAtFixedRate(this, task -> serverStatus.report(), 100, 1200);
 
         if (config.bridgeEnabled()) {
             BridgeListener bridgeListener = new BridgeListener(this, vanish);
