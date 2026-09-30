@@ -105,3 +105,31 @@ func HydrateIdentities(ctx context.Context, accounts []model.MinecraftAccount) [
 	}
 	return accounts
 }
+
+// HydrateStats attaches playtime and session counts for the roster in one
+// query. A failure is logged and leaves accounts without stats rather than
+// failing the listing.
+func HydrateStats(accounts []model.MinecraftAccount) []model.MinecraftAccount {
+	if len(accounts) == 0 {
+		return accounts
+	}
+	uuids := make([]string, len(accounts))
+	for i, account := range accounts {
+		uuids[i] = account.UUID
+	}
+	var stats []model.PlayerStats
+	if err := database.DB.Select("uuid", "playtime_minutes", "sessions").Where("uuid IN ?", uuids).Find(&stats).Error; err != nil {
+		logger.SugarLogger.Warnf("failed to load roster stats: %v", err)
+		return accounts
+	}
+	byUUID := make(map[string]model.PlayerStats, len(stats))
+	for _, row := range stats {
+		byUUID[row.UUID] = row
+	}
+	for i := range accounts {
+		if row, ok := byUUID[accounts[i].UUID]; ok {
+			accounts[i].Stats = &model.AccountStats{PlaytimeMinutes: row.PlaytimeMinutes, Sessions: row.Sessions}
+		}
+	}
+	return accounts
+}

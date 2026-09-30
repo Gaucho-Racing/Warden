@@ -19,6 +19,10 @@ export type MinecraftAccount = {
   created_at: string
   updated_at: string
   identity?: Identity
+  stats?: {
+    playtime_minutes: number
+    sessions: number
+  }
 }
 
 export type LinkTokenPreview = {
@@ -229,6 +233,41 @@ export function useDeleteBinding() {
       await api.delete(`/bindings/${id}`)
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bindings"] }),
+  })
+}
+
+// A player's account and stats by UUID, for the player details page. Both
+// answer 404 for a UUID nobody has linked, which the page shows as
+// "not found" rather than an error.
+export function usePlayerAccount(uuid: string | undefined) {
+  return useQuery({
+    queryKey: ["account", uuid],
+    queryFn: async () => {
+      try {
+        return (await api.get<MinecraftAccount>(`/accounts/${uuid}`)).data
+      } catch (error) {
+        if (isNotFound(error)) return null
+        throw error
+      }
+    },
+    enabled: !!uuid,
+    retry: false,
+  })
+}
+
+export function usePlayerStats(uuid: string | undefined) {
+  return useQuery({
+    queryKey: ["stats", uuid],
+    queryFn: async () => {
+      try {
+        return (await api.get<PlayerStats>(`/stats/${uuid}`)).data
+      } catch (error) {
+        if (isNotFound(error)) return null
+        throw error
+      }
+    },
+    enabled: !!uuid,
+    retry: false,
   })
 }
 

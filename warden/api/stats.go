@@ -32,14 +32,14 @@ func GetMyStats(c *gin.Context) {
 }
 
 // GetPlayerStats returns a stat line by UUID. Same trust level as reading the
-// account itself: the owner or an admin.
+// account itself: any signed-in member.
 func GetPlayerStats(c *gin.Context) {
 	uuid, err := service.NormalizeUUID(c.Param("uuid"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	account, err := service.GetAccountByUUID(uuid)
+	_, err = service.GetAccountByUUID(uuid)
 	if errors.Is(err, service.ErrAccountNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -48,7 +48,7 @@ func GetPlayerStats(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	Require(c, Any(RequestUserIsMinecraftAdmin(c), RequestTokenHasEntityID(c, account.EntityID)))
+	Require(c, RequestTokenExists(c))
 
 	stats, err := service.PlayerStatsForUUID(uuid)
 	if err != nil {

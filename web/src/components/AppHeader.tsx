@@ -25,7 +25,7 @@ import { type ServerState, useServerStatus } from "@/lib/warden"
 
 const mobileItems = [
   { to: "/", label: "Home", icon: PixelHouse, adminOnly: false },
-  { to: "/players", label: "Players", icon: PixelHeads, adminOnly: true },
+  { to: "/players", label: "Players", icon: PixelHeads, adminOnly: false },
   { to: "/settings", label: "Settings", icon: PixelGear, adminOnly: false },
 ]
 

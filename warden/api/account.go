@@ -9,17 +9,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ListAccounts returns every linked account. Admin-only: the mapping from
-// Minecraft name to real team member is exactly the kind of directory that
-// shouldn't be readable by anyone who can hit the API.
+// ListAccounts returns every linked account to any signed-in member, so the
+// roster of who is who in game is visible to the whole team. Unlinking stays
+// limited to admins and the account's owner (DeleteAccount).
 func ListAccounts(c *gin.Context) {
-	Require(c, RequestUserIsMinecraftAdmin(c))
+	Require(c, RequestTokenExists(c))
 	accounts, err := service.ListAccounts()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, service.HydrateIdentities(c.Request.Context(), accounts))
+	accounts = service.HydrateIdentities(c.Request.Context(), accounts)
+	c.JSON(http.StatusOK, service.HydrateStats(accounts))
 }
 
 func GetMyAccount(c *gin.Context) {
@@ -51,10 +52,9 @@ func GetAccount(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	// Readable by the owner or an admin — same rule as the list, scoped to
-	// the single row.
-	Require(c, Any(RequestUserIsMinecraftAdmin(c), RequestTokenHasEntityID(c, account.EntityID)))
-	c.JSON(http.StatusOK, account)
+	// Readable by any signed-in member, same as the roster.
+	Require(c, RequestTokenExists(c))
+	c.JSON(http.StatusOK, service.HydrateIdentities(c.Request.Context(), []model.MinecraftAccount{account})[0])
 }
 
 // DeleteAccount unlinks a Minecraft account. Owners can unlink themselves;
