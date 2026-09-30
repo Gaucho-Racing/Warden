@@ -19,12 +19,14 @@ const (
 	EventServer      = "server"
 )
 
-// DiscordMessage is a Discord post relayed into the game. Name is already
-// resolved, so the plugin only renders it.
+// DiscordMessage is a Discord post relayed into the game. Names are already
+// resolved, so the plugin only renders them. Username is the author's
+// Minecraft name, empty when they have no linked account.
 type DiscordMessage struct {
-	Type string `json:"type"`
-	Name string `json:"name"`
-	Text string `json:"text"`
+	Type     string `json:"type"`
+	Name     string `json:"name"`
+	Username string `json:"username,omitempty"`
+	Text     string `json:"text"`
 }
 
 const MessageDiscord = "discord_message"
