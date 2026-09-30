@@ -10,6 +10,22 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { errorMessage, useAccounts, useUnlinkAccount } from "@/lib/warden"
 
+function formatPlaytime(minutes: number) {
+  const hours = Math.floor(minutes / 60)
+  if (hours === 0) return `${minutes}m`
+  if (hours < 100) return `${hours}h ${minutes % 60}m`
+  return `${hours.toLocaleString()}h`
+}
+
+function RosterStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="w-20 text-right">
+      <div className="font-pixel text-base leading-tight">{value}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
+    </div>
+  )
+}
+
 export default function PlayersPage() {
   const accounts = useAccounts()
   const unlink = useUnlinkAccount()
@@ -76,6 +92,14 @@ export default function PlayersPage() {
                   </div>
                 )}
               </div>
+              <RosterStat
+                label="Playtime"
+                value={account.stats ? formatPlaytime(account.stats.playtime_minutes) : "—"}
+              />
+              <RosterStat
+                label="Sessions"
+                value={account.stats ? account.stats.sessions.toLocaleString() : "—"}
+              />
               <div className="text-xs text-muted-foreground">
                 {account.last_seen_at && !account.last_seen_at.startsWith("0001")
                   ? `Seen ${new Date(account.last_seen_at).toLocaleDateString()}`

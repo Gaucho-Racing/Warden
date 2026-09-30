@@ -19,7 +19,8 @@ func ListAccounts(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, service.HydrateIdentities(c.Request.Context(), accounts))
+	accounts = service.HydrateIdentities(c.Request.Context(), accounts)
+	c.JSON(http.StatusOK, service.HydrateStats(accounts))
 }
 
 func GetMyAccount(c *gin.Context) {

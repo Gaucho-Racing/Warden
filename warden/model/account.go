@@ -22,8 +22,16 @@ type MinecraftAccount struct {
 	UpdatedAt        time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 
 	// Derived, never stored — see AvatarURL.
-	AvatarURL string    `json:"avatar_url" gorm:"-"`
-	Identity  *Identity `json:"identity,omitempty" gorm:"-"`
+	AvatarURL string        `json:"avatar_url" gorm:"-"`
+	Identity  *Identity     `json:"identity,omitempty" gorm:"-"`
+	Stats     *AccountStats `json:"stats,omitempty" gorm:"-"`
+}
+
+// AccountStats is the slice of PlayerStats the player roster shows, filled in
+// at response time. Nil when the plugin has never reported on the player.
+type AccountStats struct {
+	PlaytimeMinutes int64 `json:"playtime_minutes"`
+	Sessions        int64 `json:"sessions"`
 }
 
 func (MinecraftAccount) TableName() string {

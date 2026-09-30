@@ -19,6 +19,10 @@ export type MinecraftAccount = {
   created_at: string
   updated_at: string
   identity?: Identity
+  stats?: {
+    playtime_minutes: number
+    sessions: number
+  }
 }
 
 export type LinkTokenPreview = {
