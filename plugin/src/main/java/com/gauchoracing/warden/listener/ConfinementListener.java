@@ -8,14 +8,29 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Location;
 import org.bukkit.Server;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
+import org.bukkit.event.Cancellable;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.hanging.HangingBreakByEntityEvent;
+import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
+import org.bukkit.event.player.PlayerBucketFillEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.inventory.ItemStack;
 
 /**
- * Keeps unlinked players near spawn until they link.
+ * Keeps unlinked players near spawn, and unable to change the world or hurt
+ * anything there, until they link.
  *
  * <p>Deliberately does not change game mode. Forcing adventure would strip
  * creative from an unlinked admin and there is nothing reliable to restore
@@ -23,6 +38,8 @@ import org.bukkit.event.player.PlayerMoveEvent;
  * state Warden does not own.
  */
 public final class ConfinementListener implements Listener {
+
+    private static final String BUILD_REMINDER = "Link your account to interact with the world";
 
     private final Server server;
     private final PlayerState state;
@@ -94,7 +111,93 @@ public final class ConfinementListener implements Listener {
         }
 
         event.setCancelled(true);
-        remind(event.getPlayer());
+        remind(event.getPlayer(), "Link your account to leave spawn");
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onBlockBreak(BlockBreakEvent event) {
+        deny(event.getPlayer(), event);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onBlockPlace(BlockPlaceEvent event) {
+        deny(event.getPlayer(), event);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onBucketEmpty(PlayerBucketEmptyEvent event) {
+        deny(event.getPlayer(), event);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onBucketFill(PlayerBucketFillEvent event) {
+        deny(event.getPlayer(), event);
+    }
+
+    /**
+     * Only block clicks, including pressure plates and trampling. Clicking air
+     * is left alone, and so is eating while looking at a block, because hunger
+     * drains on hard and a confined player still has to eat.
+     */
+    @EventHandler
+    public void onInteract(PlayerInteractEvent event) {
+        if (event.getClickedBlock() == null || !isRestricted(event.getPlayer())) {
+            return;
+        }
+        event.setUseInteractedBlock(Event.Result.DENY);
+        ItemStack item = event.getItem();
+        if (item == null || !item.getType().isEdible()) {
+            event.setUseItemInHand(Event.Result.DENY);
+        }
+        remind(event.getPlayer(), BUILD_REMINDER);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onInteractEntity(PlayerInteractEntityEvent event) {
+        deny(event.getPlayer(), event);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onArmorStandManipulate(PlayerArmorStandManipulateEvent event) {
+        deny(event.getPlayer(), event);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onDamage(EntityDamageByEntityEvent event) {
+        Player attacker = responsiblePlayer(event.getDamager());
+        if (attacker != null) {
+            deny(attacker, event);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onHangingBreak(HangingBreakByEntityEvent event) {
+        Player remover = responsiblePlayer(event.getRemover());
+        if (remover != null) {
+            deny(remover, event);
+        }
+    }
+
+    private static Player responsiblePlayer(Entity entity) {
+        if (entity instanceof Player player) {
+            return player;
+        }
+        if (entity instanceof Projectile projectile && projectile.getShooter() instanceof Player shooter) {
+            return shooter;
+        }
+        return null;
+    }
+
+    private boolean isRestricted(Player player) {
+        return enabled && state.isUnlinked(player.getUniqueId());
+    }
+
+    private void deny(Player player, Cancellable event) {
+        if (!isRestricted(player)) {
+            return;
+        }
+        event.setCancelled(true);
+        remind(player, BUILD_REMINDER);
     }
 
     private boolean withinBounds(Location location) {
@@ -112,14 +215,13 @@ public final class ConfinementListener implements Listener {
     }
 
     /** Throttled — onMove fires every tick and an action bar per tick is noise. */
-    private void remind(Player player) {
+    private void remind(Player player, String message) {
         long now = System.currentTimeMillis();
         Long previous = lastReminder.get(player.getUniqueId());
         if (previous != null && now - previous < reminderMillis) {
             return;
         }
         lastReminder.put(player.getUniqueId(), now);
-        player.sendActionBar(
-                Component.text("Link your account to leave spawn", NamedTextColor.RED));
+        player.sendActionBar(Component.text(message, NamedTextColor.RED));
     }
 }
