@@ -169,13 +169,9 @@ func (b *Bridge) onGameEvent(event Event) {
 	case EventQuit:
 		message.notice = b.playerNotice(ctx, event, "left the server", colorQuit)
 	case EventDeath:
-		name := playerName(ctx, event.UUID, event.Username)
-		// The death message already starts with the display name, which the
-		// author line shows, so only the rest goes in the description.
-		cause := strings.TrimPrefix(event.Text, name+" ")
-		message.notice = playerEmbed(name, event.UUID, escapeMarkdown(cause)+" 💀", colorDeath)
+		message.notice = notice(event.Text+" 💀", event.UUID, colorDeath)
 	case EventAdvancement:
-		message.notice = b.playerNotice(ctx, event, "has made the advancement **"+escapeMarkdown(event.Text)+"**!", colorAdvancement)
+		message.notice = b.playerNotice(ctx, event, "has made the advancement "+event.Text+"!", colorAdvancement)
 	case EventServer:
 		switch event.State {
 		case "started":
@@ -208,20 +204,18 @@ func noMentions() *discordgo.MessageAllowedMentions {
 	return &discordgo.MessageAllowedMentions{Parse: []discordgo.AllowedMentionType{}}
 }
 
-func (b *Bridge) playerNotice(ctx context.Context, event Event, description string, color int) *discordgo.MessageSend {
-	return playerEmbed(playerName(ctx, event.UUID, event.Username), event.UUID, description, color)
+func (b *Bridge) playerNotice(ctx context.Context, event Event, action string, color int) *discordgo.MessageSend {
+	return notice(playerName(ctx, event.UUID, event.Username)+" "+action, event.UUID, color)
 }
 
-// playerEmbed puts the player's head and name on the author line and the
-// event in the description. The author line is plain text, which Discord
-// draws in the system emoji font; the description gets Discord's own emoji
-// and markdown, so anything from the game must be escaped before it goes in.
-func playerEmbed(name string, uuid string, description string, color int) *discordgo.MessageSend {
+// notice is a one-line embed: the player's head and the event on the author
+// line. That line is plain text, so markdown in player-controlled text (a
+// named item in a death message, say) is shown literally, never rendered.
+func notice(title string, uuid string, color int) *discordgo.MessageSend {
 	return &discordgo.MessageSend{
 		Embeds: []*discordgo.MessageEmbed{{
-			Author:      &discordgo.MessageEmbedAuthor{Name: truncate(name, 256), IconURL: model.AvatarURL(uuid)},
-			Description: truncate(description, 4096),
-			Color:       color,
+			Author: &discordgo.MessageEmbedAuthor{Name: truncate(title, 256), IconURL: model.AvatarURL(uuid)},
+			Color:  color,
 		}},
 		AllowedMentions: noMentions(),
 	}
@@ -231,14 +225,6 @@ func playerEmbed(name string, uuid string, description string, color int) *disco
 // lifecycle stands apart from player events.
 func serverMessage(content string) *discordgo.MessageSend {
 	return &discordgo.MessageSend{Content: content, AllowedMentions: noMentions()}
-}
-
-var markdownSpecial = regexp.MustCompile("[\\\\*_~`|\\[\\]]")
-
-// escapeMarkdown backslash-escapes Discord markdown, so a named item or a
-// player name cannot bold text, hide it in spoilers or add a masked link.
-func escapeMarkdown(s string) string {
-	return markdownSpecial.ReplaceAllString(s, `\$0`)
 }
 
 // deliver sends one message at a time so Discord shows them in the order
