@@ -9,11 +9,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ListAccounts returns every linked account. Admin-only: the mapping from
-// Minecraft name to real team member is exactly the kind of directory that
-// shouldn't be readable by anyone who can hit the API.
+// ListAccounts returns every linked account to any signed-in member, so the
+// roster of who is who in game is visible to the whole team. Unlinking stays
+// limited to admins and the account's owner (DeleteAccount).
 func ListAccounts(c *gin.Context) {
-	Require(c, RequestUserIsMinecraftAdmin(c))
+	Require(c, RequestTokenExists(c))
 	accounts, err := service.ListAccounts()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

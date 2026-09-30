@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useAuth } from "@/lib/auth"
 import { errorMessage, useAccounts, useUnlinkAccount } from "@/lib/warden"
 
 function formatPlaytime(minutes: number) {
@@ -29,6 +30,7 @@ function RosterStat({ label, value }: { label: string; value: string }) {
 export default function PlayersPage() {
   const accounts = useAccounts()
   const unlink = useUnlinkAccount()
+  const { user, isMinecraftAdmin } = useAuth()
   const [filter, setFilter] = useState("")
 
   const term = filter.trim().toLowerCase()
@@ -105,25 +107,28 @@ export default function PlayersPage() {
                   ? `Seen ${new Date(account.last_seen_at).toLocaleDateString()}`
                   : "Never seen"}
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={unlink.isPending}
-                onClick={() =>
-                  unlink.mutate(account.uuid, {
-                    onSuccess: () => toast.success(`Unlinked ${account.username}`),
-                    onError: (error) =>
-                      toast.error(errorMessage(error, "Could not unlink that account")),
-                  })
-                }
-              >
-                {unlink.isPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Unlink className="size-4" />
-                )}
-                <span className="sr-only">Unlink {account.username}</span>
-              </Button>
+              {/* Mirrors DeleteAccount: admins can unlink anyone, members only themselves. */}
+              {(isMinecraftAdmin || account.entity_id === user?.entity_id) && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={unlink.isPending}
+                  onClick={() =>
+                    unlink.mutate(account.uuid, {
+                      onSuccess: () => toast.success(`Unlinked ${account.username}`),
+                      onError: (error) =>
+                        toast.error(errorMessage(error, "Could not unlink that account")),
+                    })
+                  }
+                >
+                  {unlink.isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Unlink className="size-4" />
+                  )}
+                  <span className="sr-only">Unlink {account.username}</span>
+                </Button>
+              )}
             </CardContent>
           </Card>
         ))}
