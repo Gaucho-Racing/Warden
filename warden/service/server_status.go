@@ -13,9 +13,21 @@ import (
 // is roughly half a million narrow rows.
 const serverStatusRetention = 365 * 24 * time.Hour
 
+// serverStatusStaleAfter: the plugin reports every minute, so missing a
+// couple of reports means the server is gone even if it never said it was
+// stopping (a crash, say).
+const serverStatusStaleAfter = 150 * time.Second
+
+const (
+	ServerActive  = "active"
+	ServerEmpty   = "empty"
+	ServerOffline = "offline"
+)
+
 var (
 	latestStatusMu sync.RWMutex
 	latestStatus   *model.ServerStatus
+	stoppingAt     time.Time
 )
 
 // RecordServerStatus stores a sample and makes it the latest one.
@@ -36,13 +48,29 @@ func RecordServerStatus(status model.ServerStatus) error {
 	return nil
 }
 
-// LatestServerStatus is the most recent sample since Warden started, or nil.
-func LatestServerStatus() *model.ServerStatus {
+// MarkServerStopping records that the plugin announced a shutdown, so the
+// server reads as offline immediately instead of after the stale window.
+func MarkServerStopping() {
+	latestStatusMu.Lock()
+	defer latestStatusMu.Unlock()
+	stoppingAt = time.Now()
+}
+
+// CurrentServerState is ServerActive, ServerEmpty or ServerOffline, with the
+// latest sample (nil if none has arrived since Warden started).
+func CurrentServerState() (string, *model.ServerStatus) {
 	latestStatusMu.RLock()
 	defer latestStatusMu.RUnlock()
 	if latestStatus == nil {
-		return nil
+		return ServerOffline, nil
 	}
 	status := *latestStatus
-	return &status
+	switch {
+	case status.RecordedAt.Before(stoppingAt) || time.Since(status.RecordedAt) > serverStatusStaleAfter:
+		return ServerOffline, &status
+	case status.Online == 0:
+		return ServerEmpty, &status
+	default:
+		return ServerActive, &status
+	}
 }

@@ -109,6 +109,29 @@ export type AuditLog = {
   created_at: string
 }
 
+export type ServerState = "active" | "empty" | "offline"
+
+export type ServerStatus = {
+  state: ServerState
+  online: number
+  max_players: number
+  unique_players: number
+  uptime_minutes: number
+  tps: number
+  recorded_at?: string
+}
+
+// The game server reports every minute; polling a little faster than that
+// keeps the header within a sample of the Discord topic.
+export function useServerStatus() {
+  return useQuery({
+    queryKey: ["server", "status"],
+    queryFn: async () => (await api.get<ServerStatus>("/server/status")).data,
+    refetchInterval: 30_000,
+    retry: false,
+  })
+}
+
 export function useMyAccount() {
   return useQuery({
     queryKey: ["account", "@me"],

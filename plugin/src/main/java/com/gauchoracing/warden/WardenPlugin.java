@@ -32,6 +32,7 @@ public final class WardenPlugin extends JavaPlugin {
     private SyncTask syncTask;
     private StatsReporter statsReporter;
     private BridgeClient bridge;
+    private ServerStatusReporter serverStatus;
 
     /**
      * Owned rather than borrowed from Paper's async scheduler so shutdown can
@@ -100,7 +101,7 @@ public final class WardenPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(vanish, this);
         Objects.requireNonNull(getCommand("vanish")).setExecutor(vanish);
 
-        ServerStatusReporter serverStatus = new ServerStatusReporter(this, vanish);
+        serverStatus = new ServerStatusReporter(this, vanish);
         getServer().getPluginManager().registerEvents(serverStatus, this);
         getServer().getGlobalRegionScheduler().runAtFixedRate(this, task -> serverStatus.report(), 100, 1200);
 
@@ -151,6 +152,9 @@ public final class WardenPlugin extends JavaPlugin {
         // still online here and this is the last chance to report them.
         if (statsReporter != null) {
             statsReporter.reportOnline();
+        }
+        if (serverStatus != null) {
+            serverStatus.reportStopping();
         }
         if (bridge != null) {
             bridge.close(Map.of("type", "server", "state", "stopping"));
