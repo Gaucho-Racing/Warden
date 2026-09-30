@@ -118,6 +118,7 @@ func InitializeRoutes(router *gin.Engine) {
 	router.GET("/plugin/players/:uuid", GetPlayerPermissions)
 	router.POST("/plugin/players/:uuid/seen", MarkPlayerSeen)
 	router.POST("/plugin/players/:uuid/stats", ReportPlayerStats)
+	router.POST("/plugin/server/status", ReportServerStatus)
 	router.GET("/plugin/sync", SyncAllPlayers)
 }
 
