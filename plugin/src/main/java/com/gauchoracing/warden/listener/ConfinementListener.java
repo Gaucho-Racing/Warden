@@ -19,6 +19,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
@@ -33,8 +36,8 @@ import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.inventory.ItemStack;
 
 /**
- * Keeps anyone without {@link Permissions#PLAY} near spawn, and unable to
- * change the world or hurt anything there. That covers unlinked players and
+ * Keeps anyone without {@link Permissions#PLAY} near spawn, unable to change
+ * the world or hurt anything there, and unable to be hurt themselves. That covers unlinked players and
  * linked players outside every group that grants it; the two only differ in
  * what they are told to do about it. Game mode is GameModeListener's job.
  */
@@ -188,6 +191,38 @@ public final class ConfinementListener implements Listener {
         Player attacker = responsiblePlayer(event.getDamager());
         if (attacker != null) {
             deny(attacker, event);
+        }
+    }
+
+    /**
+     * A confined player cannot run from anything, so they cannot be hurt
+     * either. The void is the exception: cancelling it would leave them
+     * falling forever, so they are put back at spawn instead.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onDamaged(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Player player) || !isRestricted(player)) {
+            return;
+        }
+        event.setCancelled(true);
+        if (event.getCause() == EntityDamageEvent.DamageCause.VOID) {
+            player.teleportAsync(spawn());
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onHunger(FoodLevelChangeEvent event) {
+        if (event.getEntity() instanceof Player player
+                && isRestricted(player)
+                && event.getFoodLevel() < player.getFoodLevel()) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onTargeted(EntityTargetLivingEntityEvent event) {
+        if (event.getTarget() instanceof Player player && isRestricted(player)) {
+            event.setCancelled(true);
         }
     }
 
