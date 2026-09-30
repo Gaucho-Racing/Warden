@@ -169,16 +169,15 @@ func (b *Bridge) onGameEvent(event Event) {
 	case EventQuit:
 		message.notice = b.playerNotice(ctx, event, "left the server", colorQuit)
 	case EventDeath:
-		message.notice = notice(event.Text+" 💀", model.AvatarURL(event.UUID), colorDeath)
+		message.notice = notice(event.Text+" 💀", event.UUID, colorDeath)
 	case EventAdvancement:
-		name := playerName(ctx, event.UUID, event.Username)
-		message.notice = notice(name+" has made the advancement "+event.Text+"!", model.AvatarURL(event.UUID), colorAdvancement)
+		message.notice = b.playerNotice(ctx, event, "has made the advancement "+event.Text+"!", colorAdvancement)
 	case EventServer:
 		switch event.State {
 		case "started":
-			message.notice = notice("Server started", "", colorJoin)
+			message.notice = serverMessage("✅ **Server has started**")
 		case "stopping":
-			message.notice = notice("Server stopping", "", colorQuit)
+			message.notice = serverMessage("🛑 **Server has stopped**")
 			b.markStopping()
 		}
 	}
@@ -206,17 +205,26 @@ func noMentions() *discordgo.MessageAllowedMentions {
 }
 
 func (b *Bridge) playerNotice(ctx context.Context, event Event, action string, color int) *discordgo.MessageSend {
-	return notice(playerName(ctx, event.UUID, event.Username)+" "+action, model.AvatarURL(event.UUID), color)
+	return notice(playerName(ctx, event.UUID, event.Username)+" "+action, event.UUID, color)
 }
 
-func notice(title string, iconURL string, color int) *discordgo.MessageSend {
+// notice is a one-line embed: the player's head and the event on the author
+// line. That line is plain text, so markdown in player-controlled text (a
+// named item in a death message, say) is shown literally, never rendered.
+func notice(title string, uuid string, color int) *discordgo.MessageSend {
 	return &discordgo.MessageSend{
 		Embeds: []*discordgo.MessageEmbed{{
-			Author: &discordgo.MessageEmbedAuthor{Name: truncate(title, 256), IconURL: iconURL},
+			Author: &discordgo.MessageEmbedAuthor{Name: truncate(title, 256), IconURL: model.AvatarURL(uuid)},
 			Color:  color,
 		}},
 		AllowedMentions: noMentions(),
 	}
+}
+
+// serverMessage is a plain bot message rather than an embed, so server
+// lifecycle stands apart from player events.
+func serverMessage(content string) *discordgo.MessageSend {
+	return &discordgo.MessageSend{Content: content, AllowedMentions: noMentions()}
 }
 
 // deliver sends one message at a time so Discord shows them in the order
