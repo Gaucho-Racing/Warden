@@ -179,9 +179,9 @@ func (b *Bridge) onGameEvent(event Event) {
 	case EventServer:
 		switch event.State {
 		case "started":
-			message.notice = serverEmbed("✅ Server started", colorJoin)
+			message.notice = serverMessage("✅ **Server has started**")
 		case "stopping":
-			message.notice = serverEmbed("🛑 Server stopping", colorQuit)
+			message.notice = serverMessage("🛑 **Server has stopped**")
 			b.markStopping()
 		}
 	}
@@ -227,11 +227,10 @@ func playerEmbed(name string, uuid string, description string, color int) *disco
 	}
 }
 
-func serverEmbed(description string, color int) *discordgo.MessageSend {
-	return &discordgo.MessageSend{
-		Embeds:          []*discordgo.MessageEmbed{{Description: description, Color: color}},
-		AllowedMentions: noMentions(),
-	}
+// serverMessage is a plain bot message rather than an embed, so server
+// lifecycle stands apart from player events.
+func serverMessage(content string) *discordgo.MessageSend {
+	return &discordgo.MessageSend{Content: content, AllowedMentions: noMentions()}
 }
 
 var markdownSpecial = regexp.MustCompile("[\\\\*_~`|\\[\\]]")
