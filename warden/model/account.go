@@ -40,16 +40,17 @@ func (a *MinecraftAccount) AfterFind(tx *gorm.DB) error {
 
 // AvatarURL returns a rendered head for a UUID.
 //
-// Crafatar rather than mc-heads: it documents its caching (20 minute skin
-// refresh, 60 minute browser cache) and supports CORS, where mc-heads
-// documents neither. Both are third parties that see our members' UUIDs —
+// Crafthead rather than Crafatar, which no longer allows use from Discord;
+// the Discord bridge uses the same URLs for webhook avatars, so the portal
+// and Discord show the same head. Crafthead sends CORS headers and a 4 hour
+// cache. It is still a third party that sees our members' UUIDs —
 // self-hosting the crop from textures.minecraft.net is the only way to stop
-// that, and is the obvious next step if it ever matters.
+// that.
 //
-// overlay includes the skin's second layer, which most modern skins use for
+// helm includes the skin's second layer, which most modern skins use for
 // hair and hats; without it a lot of players render bald.
 func AvatarURL(uuid string) string {
-	return "https://crafatar.com/avatars/" + uuid + "?size=128&overlay"
+	return "https://crafthead.net/helm/" + uuid + "/128"
 }
 
 // Identity is the hydrated Sentinel-side view of an entity, filled in from
