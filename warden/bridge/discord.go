@@ -38,6 +38,7 @@ var reservedUsername = regexp.MustCompile(`(?i)discord|clyde`)
 // player's name and head; Discord to game goes over the plugin WebSocket.
 type Bridge struct {
 	session   *discordgo.Session
+	botID     string
 	channelID string
 	hub       *Hub
 	names     *names
@@ -80,6 +81,13 @@ func Start() {
 		logger.SugarLogger.Errorf("bridge: open Discord gateway: %v", err)
 		return
 	}
+	me, err := session.User("@me")
+	if err != nil {
+		logger.SugarLogger.Errorf("bridge: look up bot user: %v", err)
+		session.Close()
+		return
+	}
+	b.botID = me.ID
 	go b.deliver()
 	current = b
 	logger.SugarLogger.Infof("bridge: connected to Discord, relaying channel %s", b.channelID)
@@ -233,9 +241,8 @@ func (b *Bridge) channelWebhook() (*discordgo.Webhook, error) {
 	if err != nil {
 		return nil, err
 	}
-	botID := b.session.State.User.ID
 	for _, hook := range hooks {
-		if hook.Name == webhookName && hook.ApplicationID == botID && hook.Token != "" {
+		if hook.Name == webhookName && hook.ApplicationID == b.botID && hook.Token != "" {
 			b.webhook = hook
 			return hook, nil
 		}
