@@ -18,8 +18,31 @@ commands:
   link:
     description: Get a link to connect your Minecraft account to Sentinel
     usage: /link
+  fly:
+    description: Toggle survival flight
+    usage: /fly
+    permission: warden.fly
+  vanish:
+    description: Toggle being hidden from other players
+    usage: /vanish
+    aliases: [v]
+    permission: warden.vanish
 
 permissions:
   warden.admin:
     description: Run Warden administrative commands
+    default: op
+  # Granted only through a binding, never by op, so who can play follows
+  # Sentinel group membership.
+  warden.play:
+    description: Play in survival and leave spawn
+    default: false
+  warden.fly:
+    description: Use /fly
+    default: op
+  warden.vanish:
+    description: Use /vanish
+    default: op
+  warden.vanish.see:
+    description: See vanished players
     default: op

@@ -5,7 +5,7 @@ header-footer:
     default:
       header:
         - ""
-        - "      &d&lGaucho Racing      "
+        - "      &d&lGaucho Racing SMP      "
         - "&7Online: &f%online%"
         - ""
       footer:

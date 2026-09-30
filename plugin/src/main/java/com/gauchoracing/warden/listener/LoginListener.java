@@ -1,6 +1,7 @@
 package com.gauchoracing.warden.listener;
 
 import com.gauchoracing.warden.Errors;
+import com.gauchoracing.warden.Permissions;
 import com.gauchoracing.warden.PlayerState;
 import com.gauchoracing.warden.WardenPlugin;
 import com.gauchoracing.warden.api.LinkToken;
@@ -97,6 +98,9 @@ public final class LoginListener implements Listener {
 
         if (state.isUnlinked(uuid)) {
             plugin.runAsync(() -> sendLinkPrompt(event.getPlayer().getUniqueId(), username));
+        } else if (!event.getPlayer().hasPermission(Permissions.PLAY)) {
+            event.getPlayer().sendMessage(
+                    Component.text(plugin.config().noAccessMessage(), NamedTextColor.RED));
         }
     }
 

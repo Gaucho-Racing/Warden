@@ -2,7 +2,10 @@ package com.gauchoracing.warden;
 
 import com.gauchoracing.warden.api.WardenClient;
 import com.gauchoracing.warden.listener.ConfinementListener;
+import com.gauchoracing.warden.listener.GameModeListener;
 import com.gauchoracing.warden.listener.LoginListener;
+import com.gauchoracing.warden.staff.FlyCommand;
+import com.gauchoracing.warden.staff.VanishManager;
 import com.gauchoracing.warden.permissions.LuckPermsApplier;
 import com.gauchoracing.warden.stats.StatsReporter;
 import com.gauchoracing.warden.task.SyncTask;
@@ -74,12 +77,21 @@ public final class WardenPlugin extends JavaPlugin {
                                 state,
                                 config.confinementRadius(),
                                 config.confinementEnabled(),
-                                config.confinementReminder()),
+                                config.confinementReminder(),
+                                config.noAccessMessage()),
                         this);
+        getServer().getPluginManager().registerEvents(new GameModeListener(this, luckPerms), this);
 
         WardenCommand command = new WardenCommand(this, loginListener);
         Objects.requireNonNull(getCommand("warden")).setExecutor(command);
         Objects.requireNonNull(getCommand("link")).setExecutor(command);
+
+        FlyCommand fly = new FlyCommand();
+        getServer().getPluginManager().registerEvents(fly, this);
+        Objects.requireNonNull(getCommand("fly")).setExecutor(fly);
+        VanishManager vanish = new VanishManager(this);
+        getServer().getPluginManager().registerEvents(vanish, this);
+        Objects.requireNonNull(getCommand("vanish")).setExecutor(vanish);
 
         statsReporter = new StatsReporter(this);
         syncTask = new SyncTask(this, state);
