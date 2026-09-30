@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/gaucho-racing/warden/warden/config"
 	"github.com/gaucho-racing/warden/warden/model"
+	"github.com/gaucho-racing/warden/warden/pkg/logger"
 	"github.com/gaucho-racing/warden/warden/pkg/sentinel"
 )
 
@@ -24,6 +26,7 @@ type ResolvedPermissions struct {
 	Username        string    `json:"username"`
 	Linked          bool      `json:"linked"`
 	EntityID        string    `json:"entity_id,omitempty"`
+	DisplayName     string    `json:"display_name,omitempty"`
 	SentinelGroups  []string  `json:"sentinel_groups"`
 	LuckPermsGroups []string  `json:"luckperms_groups"`
 	Permissions     []string  `json:"permissions"`
@@ -69,6 +72,7 @@ func ResolveForUUID(ctx context.Context, uuid string, username string) (Resolved
 	}
 
 	applyBindings(&resolved, groups, bindings)
+	resolved.DisplayName = displayNames(ctx, []string{account.EntityID})[account.EntityID]
 	return resolved, nil
 }
 
@@ -99,6 +103,12 @@ func ResolveAll(ctx context.Context) ([]ResolvedPermissions, error) {
 		}
 	}
 
+	entityIDs := make([]string, 0, len(accounts))
+	for _, account := range accounts {
+		entityIDs = append(entityIDs, account.EntityID)
+	}
+	names := displayNames(ctx, entityIDs)
+
 	now := time.Now()
 	results := make([]ResolvedPermissions, 0, len(accounts))
 	for _, account := range accounts {
@@ -107,6 +117,7 @@ func ResolveAll(ctx context.Context) ([]ResolvedPermissions, error) {
 			Username:        account.Username,
 			Linked:          true,
 			EntityID:        account.EntityID,
+			DisplayName:     names[account.EntityID],
 			SentinelGroups:  []string{},
 			LuckPermsGroups: []string{},
 			Permissions:     []string{},
@@ -116,6 +127,25 @@ func ResolveAll(ctx context.Context) ([]ResolvedPermissions, error) {
 		results = append(results, resolved)
 	}
 	return results, nil
+}
+
+// displayNames maps entity IDs to the first name shown in game. Cosmetic, so a
+// Sentinel failure is logged and the plugin falls back to Minecraft names
+// rather than failing the resolve. Sentinel only exposes the combined name
+// here, so the first word stands in for the first name.
+func displayNames(ctx context.Context, entityIDs []string) map[string]string {
+	names := make(map[string]string, len(entityIDs))
+	summaries, err := sentinel.ResolveIdentities(ctx, config.SentinelSAToken, entityIDs)
+	if err != nil {
+		logger.SugarLogger.Warnf("failed to resolve display names: %v", err)
+		return names
+	}
+	for _, summary := range summaries {
+		if fields := strings.Fields(summary.Name); len(fields) > 0 {
+			names[summary.ID] = fields[0]
+		}
+	}
+	return names
 }
 
 // applyBindings intersects the entity's Sentinel groups with the configured
