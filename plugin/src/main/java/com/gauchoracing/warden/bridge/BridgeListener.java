@@ -52,7 +52,7 @@ public final class BridgeListener implements Listener {
         Player player = event.getPlayer();
         if (player.hasPermission(Permissions.PLAY) && !vanish.isVanished(player.getUniqueId())) {
             client.send(Map.of("type", "chat", "uuid", player.getUniqueId().toString(),
-                    "text", PLAIN.serialize(event.message())));
+                    "username", player.getName(), "text", PLAIN.serialize(event.message())));
         }
     }
 
@@ -73,7 +73,7 @@ public final class BridgeListener implements Listener {
         Component message = event.deathMessage();
         if (message != null && !vanish.isVanished(player.getUniqueId())) {
             client.send(Map.of("type", "death", "uuid", player.getUniqueId().toString(),
-                    "text", PLAIN.serialize(message)));
+                    "username", player.getName(), "text", PLAIN.serialize(message)));
         }
     }
 
@@ -83,13 +83,14 @@ public final class BridgeListener implements Listener {
         Player player = event.getPlayer();
         if (display != null && display.doesAnnounceToChat() && !vanish.isVanished(player.getUniqueId())) {
             client.send(Map.of("type", "advancement", "uuid", player.getUniqueId().toString(),
-                    "text", PLAIN.serialize(display.title())));
+                    "username", player.getName(), "text", PLAIN.serialize(display.title())));
         }
     }
 
     private void announce(Player player, String type) {
         if (!vanish.isVanished(player.getUniqueId())) {
-            client.send(Map.of("type", type, "uuid", player.getUniqueId().toString()));
+            client.send(Map.of("type", type, "uuid", player.getUniqueId().toString(),
+                    "username", player.getName()));
         }
     }
 

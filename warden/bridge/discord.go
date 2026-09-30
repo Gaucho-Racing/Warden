@@ -154,18 +154,18 @@ func (b *Bridge) onGameEvent(event Event) {
 			return
 		}
 		params = &discordgo.WebhookParams{
-			Username:  webhookUsername(b.names.player(ctx, event.UUID)),
+			Username:  webhookUsername(b.names.player(ctx, event.UUID, event.Username)),
 			AvatarURL: model.AvatarURL(event.UUID),
 			Content:   event.Text,
 		}
 	case EventJoin:
-		params = b.playerEmbed(ctx, event.UUID, "joined the server", colorJoin)
+		params = b.playerEmbed(ctx, event, "joined the server", colorJoin)
 	case EventQuit:
-		params = b.playerEmbed(ctx, event.UUID, "left the server", colorQuit)
+		params = b.playerEmbed(ctx, event, "left the server", colorQuit)
 	case EventDeath:
 		params = embed(event.Text, model.AvatarURL(event.UUID), colorDeath)
 	case EventAdvancement:
-		name := b.names.player(ctx, event.UUID)
+		name := b.names.player(ctx, event.UUID, event.Username)
 		params = embed(name+" has made the advancement "+event.Text, model.AvatarURL(event.UUID), colorAdvancement)
 	case EventServer:
 		switch event.State {
@@ -187,8 +187,8 @@ func (b *Bridge) onGameEvent(event Event) {
 	}
 }
 
-func (b *Bridge) playerEmbed(ctx context.Context, uuid string, action string, color int) *discordgo.WebhookParams {
-	return embed(b.names.player(ctx, uuid)+" "+action, model.AvatarURL(uuid), color)
+func (b *Bridge) playerEmbed(ctx context.Context, event Event, action string, color int) *discordgo.WebhookParams {
+	return embed(b.names.player(ctx, event.UUID, event.Username)+" "+action, model.AvatarURL(event.UUID), color)
 }
 
 func embed(title string, iconURL string, color int) *discordgo.WebhookParams {

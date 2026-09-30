@@ -17,7 +17,9 @@ const nameTTL = 5 * time.Minute
 
 // names resolves who someone is on the other side of the bridge, cached
 // because every chat line would otherwise cost a database read and one or two
-// Sentinel calls.
+// Sentinel calls. Only fully resolved names are cached: "not linked" is
+// rechecked every time, so linking shows up on the very next message rather
+// than after the cache expires.
 type names struct {
 	mu      sync.Mutex
 	players map[string]cachedName
@@ -34,16 +36,24 @@ func newNames() *names {
 	return &names{players: map[string]cachedName{}, discord: map[string]cachedName{}}
 }
 
-// player is "First (username)" for a linked player, else the Minecraft name.
-func (n *names) player(ctx context.Context, uuid string) string {
+// player is "First (username)" for a linked player, else fallback, the
+// Minecraft name the plugin sent.
+func (n *names) player(ctx context.Context, uuid string, fallback string) string {
 	if entry, ok := n.lookup(n.players, uuid); ok {
 		return entry.name
 	}
-	name := uuid
-	if account, err := service.GetAccountByUUID(uuid); err == nil {
-		name = withFirstName(service.FirstName(ctx, account.EntityID), account.Username)
+	account, err := service.GetAccountByUUID(uuid)
+	if err != nil {
+		if fallback == "" {
+			return uuid
+		}
+		return fallback
 	}
-	n.store(n.players, uuid, cachedName{name: name})
+	first := service.FirstName(ctx, account.EntityID)
+	name := withFirstName(first, account.Username)
+	if first != "" {
+		n.store(n.players, uuid, cachedName{name: name})
+	}
 	return name
 }
 
@@ -66,14 +76,12 @@ func (n *names) discordAuthor(ctx context.Context, discordID string, fallback st
 		}
 		if account, err := service.GetAccountByEntityID(entityID); err == nil {
 			username = account.Username
+			n.store(n.discord, discordID, cachedName{name: name, username: username})
 		}
 	case errors.As(err, &sentinelErr) && sentinelErr.Code == http.StatusNotFound:
 	default:
-		// Don't cache a Sentinel outage as "not in Sentinel".
 		logger.SugarLogger.Warnf("bridge: resolve discord user %s: %v", discordID, err)
-		return name, ""
 	}
-	n.store(n.discord, discordID, cachedName{name: name, username: username})
 	return name, username
 }
 
