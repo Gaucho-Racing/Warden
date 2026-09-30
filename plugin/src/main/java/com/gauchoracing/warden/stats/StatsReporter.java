@@ -1,5 +1,6 @@
 package com.gauchoracing.warden.stats;
 
+import com.gauchoracing.warden.Errors;
 import com.gauchoracing.warden.WardenPlugin;
 import org.bukkit.entity.Player;
 
@@ -34,7 +35,7 @@ public final class StatsReporter {
                 // beyond a slightly stale portal.
                 plugin.getLogger()
                         .fine("Warden: stats report failed for " + snapshot.username() + ": "
-                                + e.getMessage());
+                                + Errors.describe(e));
             }
         });
     }
