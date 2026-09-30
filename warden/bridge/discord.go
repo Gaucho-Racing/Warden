@@ -169,16 +169,19 @@ func (b *Bridge) onGameEvent(event Event) {
 	case EventQuit:
 		message.notice = b.playerNotice(ctx, event, "left the server", colorQuit)
 	case EventDeath:
-		message.notice = notice(event.Text+" 💀", model.AvatarURL(event.UUID), colorDeath)
-	case EventAdvancement:
 		name := playerName(ctx, event.UUID, event.Username)
-		message.notice = notice(name+" has made the advancement "+event.Text+"!", model.AvatarURL(event.UUID), colorAdvancement)
+		// The death message already starts with the display name, which the
+		// author line shows, so only the rest goes in the description.
+		cause := strings.TrimPrefix(event.Text, name+" ")
+		message.notice = playerEmbed(name, event.UUID, escapeMarkdown(cause)+" 💀", colorDeath)
+	case EventAdvancement:
+		message.notice = b.playerNotice(ctx, event, "has made the advancement **"+escapeMarkdown(event.Text)+"**!", colorAdvancement)
 	case EventServer:
 		switch event.State {
 		case "started":
-			message.notice = notice("Server started", "", colorJoin)
+			message.notice = serverEmbed("✅ Server started", colorJoin)
 		case "stopping":
-			message.notice = notice("Server stopping", "", colorQuit)
+			message.notice = serverEmbed("🛑 Server stopping", colorQuit)
 			b.markStopping()
 		}
 	}
@@ -205,18 +208,38 @@ func noMentions() *discordgo.MessageAllowedMentions {
 	return &discordgo.MessageAllowedMentions{Parse: []discordgo.AllowedMentionType{}}
 }
 
-func (b *Bridge) playerNotice(ctx context.Context, event Event, action string, color int) *discordgo.MessageSend {
-	return notice(playerName(ctx, event.UUID, event.Username)+" "+action, model.AvatarURL(event.UUID), color)
+func (b *Bridge) playerNotice(ctx context.Context, event Event, description string, color int) *discordgo.MessageSend {
+	return playerEmbed(playerName(ctx, event.UUID, event.Username), event.UUID, description, color)
 }
 
-func notice(title string, iconURL string, color int) *discordgo.MessageSend {
+// playerEmbed puts the player's head and name on the author line and the
+// event in the description. The author line is plain text, which Discord
+// draws in the system emoji font; the description gets Discord's own emoji
+// and markdown, so anything from the game must be escaped before it goes in.
+func playerEmbed(name string, uuid string, description string, color int) *discordgo.MessageSend {
 	return &discordgo.MessageSend{
 		Embeds: []*discordgo.MessageEmbed{{
-			Author: &discordgo.MessageEmbedAuthor{Name: truncate(title, 256), IconURL: iconURL},
-			Color:  color,
+			Author:      &discordgo.MessageEmbedAuthor{Name: truncate(name, 256), IconURL: model.AvatarURL(uuid)},
+			Description: truncate(description, 4096),
+			Color:       color,
 		}},
 		AllowedMentions: noMentions(),
 	}
+}
+
+func serverEmbed(description string, color int) *discordgo.MessageSend {
+	return &discordgo.MessageSend{
+		Embeds:          []*discordgo.MessageEmbed{{Description: description, Color: color}},
+		AllowedMentions: noMentions(),
+	}
+}
+
+var markdownSpecial = regexp.MustCompile("[\\\\*_~`|\\[\\]]")
+
+// escapeMarkdown backslash-escapes Discord markdown, so a named item or a
+// player name cannot bold text, hide it in spoilers or add a masked link.
+func escapeMarkdown(s string) string {
+	return markdownSpecial.ReplaceAllString(s, `\$0`)
 }
 
 // deliver sends one message at a time so Discord shows them in the order
