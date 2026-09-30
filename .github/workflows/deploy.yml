@@ -52,7 +52,13 @@ jobs:
           echo "new_tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
           echo "new=$NEW" >> "$GITHUB_OUTPUT"
           echo "old=$OLD" >> "$GITHUB_OUTPUT"
-          echo "old_tag=v$OLD" >> "$GITHUB_OUTPUT"
+          # Before the first release infra pins a sha-<commit> tag; compare
+          # from that commit rather than a v-tag that does not exist.
+          if [[ "$OLD" == sha-* ]]; then
+            echo "old_tag=${OLD#sha-}" >> "$GITHUB_OUTPUT"
+          else
+            echo "old_tag=v$OLD" >> "$GITHUB_OUTPUT"
+          fi
           echo "short_sha=$(git rev-parse --short "$GITHUB_SHA")" >> "$GITHUB_OUTPUT"
           if [ "$NEW" = "$OLD" ]; then
             echo "infra already at $NEW; nothing to do."
@@ -60,6 +66,33 @@ jobs:
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
+
+      # The release also triggers the image builds, which tag :<version> a
+      # few minutes later. Opening the PR before they exist would let a
+      # quick merge roll pods onto tags that cannot be pulled yet. A timeout
+      # still opens the PR, flagged, so a slow build never loses the deploy.
+      - name: Wait for release images
+        id: images
+        if: steps.versions.outputs.skip == 'false'
+        env:
+          NEW: ${{ steps.versions.outputs.new }}
+        run: |
+          deadline=$((SECONDS + 1800))
+          missing=""
+          for svc in $SERVICES; do
+            ref="ghcr.io/gaucho-racing/warden-$svc:$NEW"
+            until docker buildx imagetools inspect "$ref" >/dev/null 2>&1; do
+              if (( SECONDS >= deadline )); then
+                echo "::warning::timed out waiting for $ref"
+                missing="$missing warden-$svc"
+                continue 2
+              fi
+              echo "waiting for $ref"
+              sleep 30
+            done
+            echo "found $ref"
+          done
+          echo "missing=${missing# }" >> "$GITHUB_OUTPUT"
 
       - name: Bump image tags
         if: steps.versions.outputs.skip == 'false'
@@ -83,6 +116,7 @@ jobs:
           WARDEN_REPO: ${{ github.repository }}
           NEW_TAG: ${{ steps.versions.outputs.new_tag }}
           OLD_TAG: ${{ steps.versions.outputs.old_tag }}
+          MISSING_IMAGES: ${{ steps.images.outputs.missing }}
         run: |
           # Format each commit as: `sha` subject - @author (#pr)
           # author is the commit's GitHub login (not the git name), and the PR
@@ -103,6 +137,11 @@ jobs:
             done
           }
           {
+            if [ -n "$MISSING_IMAGES" ]; then
+              echo "> [!WARNING]"
+              echo "> These images were not published within 30 minutes of the release, so do not merge until they exist: \`${MISSING_IMAGES}\`"
+              echo
+            fi
             echo "Bumps the warden service images to **${NEW_TAG#v}**:"
             echo
             for svc in $SERVICES; do echo "- \`warden-$svc\` → \`${NEW_TAG#v}\`"; done

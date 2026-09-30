@@ -69,7 +69,7 @@ fi
 SEMVER="$INPUT"
 VERSION="v${INPUT}"
 TAG="$VERSION"
-IMAGES=("warden-server" "warden-web")
+IMAGES=("warden-server" "warden-web" "warden-minecraft")
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 cd "$REPO_ROOT"
@@ -88,6 +88,7 @@ echo "  Branch:  main"
 echo ""
 echo "  Files to update:"
 echo "    warden/config/config.go"
+echo "    plugin/pom.xml"
 echo ""
 echo "  Docker images that will be tagged:"
 for image in "${IMAGES[@]}"; do
@@ -101,8 +102,15 @@ if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
 fi
 
 sed -i '' "s/const Version = \".*\"/const Version = \"${SEMVER}\"/" "${REPO_ROOT}/warden/config/config.go"
+# Only the project's own <version>, which directly follows its artifactId;
+# dependency versions come from properties and must not change.
+perl -0pi -e "s|(<artifactId>warden-plugin</artifactId>\\s*<version>)[^<]+(</version>)|\${1}${SEMVER}\${2}|" "${REPO_ROOT}/plugin/pom.xml"
+if ! grep -q "<version>${SEMVER}</version>" "${REPO_ROOT}/plugin/pom.xml"; then
+    echo "Error: failed to bump plugin/pom.xml to ${SEMVER}"
+    exit 1
+fi
 
-git add warden/config/config.go
+git add warden/config/config.go plugin/pom.xml
 git commit --allow-empty -m "release: warden ${VERSION}"
 git push origin main
 
