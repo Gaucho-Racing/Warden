@@ -102,11 +102,11 @@ public final class BridgeListener implements Listener {
         if (!message.has("type") || !"discord_message".equals(message.get("type").getAsString())) {
             return;
         }
-        // Same "Name: text" shape as game chat (see the warden datapack), with
+        // Same "Name » text" shape as game chat (see the warden datapack), with
         // the name in blurple instead of a [Discord] prefix.
         Component line = Component.text()
                 .append(Component.text(message.get("name").getAsString(), DISCORD_BLURPLE))
-                .append(Component.text(": ", NamedTextColor.WHITE))
+                .append(Component.text(" » ", NamedTextColor.WHITE))
                 .append(Component.text(message.get("text").getAsString()))
                 .build();
         Server server = plugin.getServer();
