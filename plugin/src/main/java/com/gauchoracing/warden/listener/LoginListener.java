@@ -1,5 +1,6 @@
 package com.gauchoracing.warden.listener;
 
+import com.gauchoracing.warden.Errors;
 import com.gauchoracing.warden.PlayerState;
 import com.gauchoracing.warden.WardenPlugin;
 import com.gauchoracing.warden.api.LinkToken;
@@ -53,14 +54,14 @@ public final class LoginListener implements Listener {
             plugin.getLogger()
                     .warning("Warden: could not resolve " + username
                             + ", confining to spawn with no managed groups ("
-                            + e.getMessage() + ")");
+                            + Errors.describe(e) + ")");
             state.markUnlinked(uuid);
             try {
                 plugin.applier().applyPlayer(uuid, List.of(), plugin.managedGroupPrefix());
             } catch (Exception applyFailure) {
                 plugin.getLogger()
                         .severe("Warden: failed to strip permissions for " + username + ": "
-                                + applyFailure.getMessage());
+                                + Errors.describe(applyFailure));
             }
             return;
         }
@@ -71,7 +72,7 @@ public final class LoginListener implements Listener {
         } catch (Exception e) {
             plugin.getLogger()
                     .severe("Warden: failed to apply permissions for " + username + ": "
-                            + e.getMessage());
+                            + Errors.describe(e));
         }
 
         if (resolved.linked()) {
@@ -129,7 +130,7 @@ public final class LoginListener implements Listener {
         } catch (Exception e) {
             plugin.getLogger()
                     .warning("Warden: could not mint a link token for " + username + ": "
-                            + e.getMessage());
+                            + Errors.describe(e));
         }
     }
 }

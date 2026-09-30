@@ -1,0 +1,6 @@
+*
+!plugin/pom.xml
+!plugin/src
+!minecraft-server/plugins.txt
+!minecraft-server/plugins
+!minecraft-server/config

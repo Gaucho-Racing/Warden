@@ -20,7 +20,7 @@ import java.util.UUID;
  * {@code AsyncPlayerPreLoginEvent}, which already runs off-thread, or the
  * async scheduler.
  */
-public final class WardenClient {
+public final class WardenClient implements AutoCloseable {
 
     /** The service returns snake_case; records here are camelCase. */
     private static final Gson GSON = new GsonBuilder()
@@ -30,11 +30,18 @@ public final class WardenClient {
     private final HttpClient http;
     private final String baseUrl;
     private final String token;
+    private final Duration timeout;
 
     public WardenClient(String baseUrl, String token, Duration timeout) {
         this.baseUrl = baseUrl.replaceAll("/+$", "");
         this.token = token;
+        this.timeout = timeout;
         this.http = HttpClient.newBuilder().connectTimeout(timeout).build();
+    }
+
+    @Override
+    public void close() {
+        http.close();
     }
 
     /** Full desired state: every managed group and every linked player. */
@@ -104,6 +111,7 @@ public final class WardenClient {
             throws IOException, InterruptedException {
         HttpRequest request = builder.header("Authorization", "Bearer " + token)
                 .header("Accept", "application/json")
+                .timeout(timeout)
                 .build();
         HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
         int status = response.statusCode();

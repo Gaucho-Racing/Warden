@@ -6,7 +6,12 @@ import com.gauchoracing.warden.listener.LoginListener;
 import com.gauchoracing.warden.permissions.LuckPermsApplier;
 import com.gauchoracing.warden.stats.StatsReporter;
 import com.gauchoracing.warden.task.SyncTask;
+import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -20,6 +25,14 @@ public final class WardenPlugin extends JavaPlugin {
     private StatsReporter statsReporter;
 
     /**
+     * Owned rather than borrowed from Paper's async scheduler so shutdown can
+     * wait for in-flight requests. Paper cancels a plugin's pending tasks on
+     * disable but not running ones, and those then die loading classes from a
+     * jar that has already been closed.
+     */
+    private ExecutorService io;
+
+    /**
      * Mirrors service.ManagedGroupPrefix. Seeded with the compiled-in value
      * and replaced by whatever the service reports on each sync, so the two
      * cannot drift into Warden orphaning every group it manages.
@@ -28,6 +41,7 @@ public final class WardenPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        io = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("warden-io-", 0).factory());
         saveDefaultConfig();
         config = WardenConfig.from(getConfig());
 
@@ -74,7 +88,7 @@ public final class WardenPlugin extends JavaPlugin {
         // first player arrives, then on the configured interval.
         getServer().getAsyncScheduler().runAtFixedRate(
                 this,
-                scheduled -> syncTask.run(),
+                scheduled -> runAsync(syncTask),
                 5,
                 config.syncInterval().toSeconds(),
                 java.util.concurrent.TimeUnit.SECONDS);
@@ -95,8 +109,39 @@ public final class WardenPlugin extends JavaPlugin {
                 + " (sync every " + ticks / 20 + "s)");
     }
 
+    @Override
+    public void onDisable() {
+        if (io == null) {
+            return;
+        }
+        // Players are kicked only after plugins are disabled, so they are
+        // still online here and this is the last chance to report them.
+        if (statsReporter != null) {
+            statsReporter.reportOnline();
+        }
+        io.shutdown();
+        Duration grace = config.timeout().plusSeconds(2);
+        try {
+            if (!io.awaitTermination(grace.toMillis(), TimeUnit.MILLISECONDS)) {
+                getLogger().warning("Warden: requests still running after " + grace.toSeconds()
+                        + "s, abandoning them");
+                io.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            io.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+        if (client != null) {
+            client.close();
+        }
+    }
+
     public void runAsync(Runnable runnable) {
-        getServer().getAsyncScheduler().runNow(this, scheduled -> runnable.run());
+        try {
+            io.execute(runnable);
+        } catch (RejectedExecutionException e) {
+            getLogger().fine("Warden: shutting down, dropped a request");
+        }
     }
 
     public WardenConfig config() {

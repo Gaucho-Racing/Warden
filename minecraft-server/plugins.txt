@@ -1,0 +1,7 @@
+# Modrinth plugins. Pin each to a version built for the Paper version in the
+# Dockerfile; removing a line removes the plugin from /data/plugins on boot.
+luckperms:v5.5.71-bukkit
+sleeper:1.10.8
+tab-was-taken:6.2.0
+chunky:1.5.3
+coreprotect:24.1

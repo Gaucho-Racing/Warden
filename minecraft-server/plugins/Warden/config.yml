@@ -1,0 +1,16 @@
+warden:
+  base-url: "${CFG_WARDEN_BASE_URL}"
+  token: "${CFG_WARDEN_TOKEN}"
+  timeout-seconds: 5
+
+sync:
+  interval-seconds: 300
+
+stats:
+  enabled: true
+  interval-seconds: 600
+
+confinement:
+  enabled: true
+  radius: 32
+  reminder-seconds: 2

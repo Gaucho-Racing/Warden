@@ -1,5 +1,6 @@
 package com.gauchoracing.warden.task;
 
+import com.gauchoracing.warden.Errors;
 import com.gauchoracing.warden.PlayerState;
 import com.gauchoracing.warden.WardenPlugin;
 import com.gauchoracing.warden.api.ResolvedPermissions;
@@ -31,7 +32,7 @@ public final class SyncTask implements Runnable {
         try {
             snapshot = plugin.client().sync();
         } catch (Exception e) {
-            plugin.getLogger().warning("Warden: sync failed, keeping current state: " + e.getMessage());
+            plugin.getLogger().warning("Warden: sync failed, keeping current state: " + Errors.describe(e));
             return;
         }
 
@@ -43,7 +44,7 @@ public final class SyncTask implements Runnable {
             // Without the groups, assigning memberships would silently grant
             // nothing, so stop rather than press on.
             plugin.getLogger().severe("Warden: failed to reconcile groups, skipping players: "
-                    + e.getMessage());
+                    + Errors.describe(e));
             return;
         }
 
@@ -57,7 +58,7 @@ public final class SyncTask implements Runnable {
                 applied++;
             } catch (Exception e) {
                 plugin.getLogger().warning("Warden: failed to apply " + player.username() + ": "
-                        + e.getMessage());
+                        + Errors.describe(e));
             }
         }
         plugin.getLogger().info("Warden: sync applied " + snapshot.groups().size()

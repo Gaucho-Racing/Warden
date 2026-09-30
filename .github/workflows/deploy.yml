@@ -15,7 +15,7 @@ on:
 env:
   INFRA_REPO: Gaucho-Racing/infrastructure
   KUSTOMIZATION: infra/kubernetes/gr-foundry/manifests/warden/kustomization.yaml
-  SERVICES: "server web"
+  SERVICES: "server web minecraft"
 
 jobs:
   infra-pr:
@@ -69,7 +69,7 @@ jobs:
           # Surgically rewrite the newTag of each warden-* image only, leaving
           # kerbecs and all comments/formatting untouched for a clean diff.
           awk -v new="$NEW" '
-            $0 ~ "- name: ghcr.io/gaucho-racing/warden-(server|web)$" { inwarden=1; print; next }
+            $0 ~ "- name: ghcr.io/gaucho-racing/warden-(server|web|minecraft)$" { inwarden=1; print; next }
             inwarden==1 && $1=="newTag:" { sub(/newTag:[[:space:]]*.*/, "newTag: " new); inwarden=0 }
             { print }
           ' "$KUSTOMIZATION" > "$KUSTOMIZATION.tmp" && mv "$KUSTOMIZATION.tmp" "$KUSTOMIZATION"
