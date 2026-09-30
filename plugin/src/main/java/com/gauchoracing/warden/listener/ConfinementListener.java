@@ -26,6 +26,9 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerPortalEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.inventory.ItemStack;
 
 /**
@@ -39,6 +42,7 @@ import org.bukkit.inventory.ItemStack;
  */
 public final class ConfinementListener implements Listener {
 
+    private static final String LEAVE_REMINDER = "Link your account to leave spawn";
     private static final String BUILD_REMINDER = "Link your account to interact with the world";
 
     private final Server server;
@@ -89,29 +93,45 @@ public final class ConfinementListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onMove(PlayerMoveEvent event) {
-        if (!enabled || !state.isUnlinked(event.getPlayer().getUniqueId())) {
+        if (!isRestricted(event.getPlayer())) {
             return;
         }
         // Fires on look-only movement too; skip those cheaply.
         if (!event.hasChangedPosition()) {
             return;
         }
-
-        Location to = event.getTo();
-        if (withinBounds(to)) {
+        if (!escapes(event.getFrom(), event.getTo())) {
             return;
         }
-
-        // Only block movement that takes them further out. Cancelling every
-        // out-of-bounds move would freeze anyone already outside, including
-        // when they are walking back toward spawn.
-        Location from = event.getFrom();
-        if (movingInward(from, to)) {
-            return;
-        }
-
         event.setCancelled(true);
-        remind(event.getPlayer(), "Link your account to leave spawn");
+        remind(event.getPlayer(), LEAVE_REMINDER);
+    }
+
+    /**
+     * Teleports and portals have their own handler lists, so onMove never sees
+     * them and an ender pearl or chorus fruit would hop the boundary. Command
+     * and plugin teleports are exempt so admins, and our own pull back to
+     * spawn, still work.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onTeleport(PlayerTeleportEvent event) {
+        if (event.getCause() == TeleportCause.COMMAND || event.getCause() == TeleportCause.PLUGIN) {
+            return;
+        }
+        denyEscape(event);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPortal(PlayerPortalEvent event) {
+        denyEscape(event);
+    }
+
+    private void denyEscape(PlayerTeleportEvent event) {
+        if (!isRestricted(event.getPlayer()) || !escapes(event.getFrom(), event.getTo())) {
+            return;
+        }
+        event.setCancelled(true);
+        remind(event.getPlayer(), LEAVE_REMINDER);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -198,6 +218,15 @@ public final class ConfinementListener implements Listener {
         }
         event.setCancelled(true);
         remind(player, BUILD_REMINDER);
+    }
+
+    /**
+     * Only movement that takes them further out counts. Blocking every
+     * out-of-bounds move would freeze anyone already outside, including when
+     * they are walking back toward spawn.
+     */
+    private boolean escapes(Location from, Location to) {
+        return !withinBounds(to) && !movingInward(from, to);
     }
 
     private boolean withinBounds(Location location) {
