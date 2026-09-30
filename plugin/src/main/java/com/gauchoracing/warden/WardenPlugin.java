@@ -1,6 +1,8 @@
 package com.gauchoracing.warden;
 
 import com.gauchoracing.warden.api.WardenClient;
+import com.gauchoracing.warden.bridge.BridgeClient;
+import com.gauchoracing.warden.bridge.BridgeListener;
 import com.gauchoracing.warden.listener.ConfinementListener;
 import com.gauchoracing.warden.listener.DisplayNameListener;
 import com.gauchoracing.warden.listener.GameModeListener;
@@ -11,6 +13,7 @@ import com.gauchoracing.warden.permissions.LuckPermsApplier;
 import com.gauchoracing.warden.stats.StatsReporter;
 import com.gauchoracing.warden.task.SyncTask;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,6 +30,7 @@ public final class WardenPlugin extends JavaPlugin {
     private LuckPermsApplier applier;
     private SyncTask syncTask;
     private StatsReporter statsReporter;
+    private BridgeClient bridge;
 
     /**
      * Owned rather than borrowed from Paper's async scheduler so shutdown can
@@ -95,6 +99,16 @@ public final class WardenPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(vanish, this);
         Objects.requireNonNull(getCommand("vanish")).setExecutor(vanish);
 
+        if (config.bridgeEnabled()) {
+            BridgeListener bridgeListener = new BridgeListener(this, vanish);
+            bridge = new BridgeClient(config.baseUrl(), config.token(), config.timeout(), getLogger(),
+                    bridgeListener::onBridgeMessage);
+            bridgeListener.attach(bridge);
+            getServer().getPluginManager().registerEvents(bridgeListener, this);
+            bridge.start();
+            bridge.send(Map.of("type", "server", "state", "started"));
+        }
+
         statsReporter = new StatsReporter(this);
         syncTask = new SyncTask(this, state);
         long ticks = config.syncInterval().toSeconds() * 20L;
@@ -132,6 +146,9 @@ public final class WardenPlugin extends JavaPlugin {
         // still online here and this is the last chance to report them.
         if (statsReporter != null) {
             statsReporter.reportOnline();
+        }
+        if (bridge != null) {
+            bridge.close(Map.of("type", "server", "state", "stopping"));
         }
         io.shutdown();
         Duration grace = config.timeout().plusSeconds(2);

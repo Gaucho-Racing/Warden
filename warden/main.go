@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gaucho-racing/warden/warden/api"
+	"github.com/gaucho-racing/warden/warden/bridge"
 	"github.com/gaucho-racing/warden/warden/config"
 	"github.com/gaucho-racing/warden/warden/database"
 	"github.com/gaucho-racing/warden/warden/pkg/logger"
@@ -20,6 +21,7 @@ func main() {
 	}
 	database.Init()
 	service.StartLinkTokenReaper()
+	bridge.Start()
 
 	api.Run()
 }

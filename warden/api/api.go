@@ -84,6 +84,7 @@ func InitializeRoutes(router *gin.Engine) {
 	router.POST("/plugin/players/:uuid/seen", MarkPlayerSeen)
 	router.POST("/plugin/players/:uuid/stats", ReportPlayerStats)
 	router.GET("/plugin/sync", SyncAllPlayers)
+	router.GET("/plugin/bridge", ServeBridge)
 }
 
 // AuthChecker resolves one of two independent credentials depending on the

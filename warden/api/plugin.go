@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/gaucho-racing/warden/warden/bridge"
 	"github.com/gaucho-racing/warden/warden/model"
 	"github.com/gaucho-racing/warden/warden/service"
 	"github.com/gin-gonic/gin"
@@ -146,4 +147,17 @@ func normalizePlayer(rawUUID string, rawUsername string) (string, string, error)
 		return "", "", err
 	}
 	return uuid, username, nil
+}
+
+// ServeBridge is the plugin's long-lived WebSocket for the Discord chat
+// bridge. It answers 503 when the bridge is off, which the plugin treats as
+// "retry later" rather than an error worth logging loudly.
+func ServeBridge(c *gin.Context) {
+	Require(c, RequestIsPlugin(c))
+	b := bridge.Current()
+	if b == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "discord bridge is disabled"})
+		return
+	}
+	b.ServePlugin(c.Writer, c.Request)
 }

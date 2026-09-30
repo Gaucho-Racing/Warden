@@ -38,6 +38,15 @@ var PluginToken = os.Getenv("PLUGIN_TOKEN")
 // portal can move without reshipping a jar.
 var PublicBaseURL = os.Getenv("PUBLIC_BASE_URL")
 
+// The Discord bridge runs only when both are set. The bot token never leaves
+// this service; the plugin only ever sees game events and rendered names.
+var DiscordToken = os.Getenv("DISCORD_TOKEN")
+var DiscordChannelID = os.Getenv("DISCORD_CHANNEL_ID")
+
+func DiscordBridgeEnabled() bool {
+	return DiscordToken != "" && DiscordChannelID != ""
+}
+
 var LinkTokenTTL time.Duration
 var GroupSyncInterval time.Duration
 
