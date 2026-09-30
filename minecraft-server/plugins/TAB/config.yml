@@ -5,12 +5,12 @@ header-footer:
     default:
       header:
         - ""
-        - "&6&lGaucho Racing"
+        - "      &d&lGaucho Racing      "
         - "&7Online: &f%online%"
         - ""
       footer:
         - ""
-        - "&7TPS: &f%tps%  &7MSPT: &f%mspt%  &7Ping: &f%ping%ms"
+        - "      &7TPS: &f%tps%  &7MSPT: &f%mspt%  &7Ping: &f%ping%ms      "
         - ""
 
 # https://github.com/NEZNAMY/TAB/wiki/Feature-guide:-Tablist-name-formatting
@@ -35,7 +35,7 @@ scoreboard-teams:
 playerlist-objective:
   enabled: true
   value: "%ping%"
-  fancy-value: "&7Ping: %ping%"
+  fancy-value: "&7%ping%ms"
   title: "TAB" # Only visible on Bedrock Edition
   render-type: INTEGER
   disable-condition: '%world%=disabledworld'
