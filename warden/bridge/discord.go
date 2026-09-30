@@ -24,9 +24,10 @@ const (
 	// falling back to the plain name, rather than stalling the queue.
 	resolveTimeout = 2 * time.Second
 
-	colorJoin        = 0x57F287
-	colorQuit        = 0xED4245
-	colorDeath       = 0x99AAB5
+	colorJoin = 0x57F287
+	colorQuit = 0xED4245
+	// Discord treats 0x000000 as "no colour" and draws its default gray bar.
+	colorDeath       = 0x010101
 	colorAdvancement = 0xFEE75C
 )
 
@@ -35,15 +36,16 @@ var customEmoji = regexp.MustCompile(`<a?:(\w+):\d+>`)
 // Discord rejects webhook usernames containing these, case-insensitively.
 var reservedUsername = regexp.MustCompile(`(?i)discord|clyde`)
 
-// Bridge relays chat between the game and one Discord channel. Game to
-// Discord goes through a channel webhook so each message carries the
-// player's name and head; Discord to game goes over the plugin WebSocket.
+// Bridge relays chat between the game and one Discord channel. Game chat goes
+// through a channel webhook so each message carries the player's name and
+// head; joins, deaths and other notices are posted by the bot itself.
+// Discord to game goes over the plugin WebSocket.
 type Bridge struct {
 	session   *discordgo.Session
 	botID     string
 	channelID string
 	hub       *Hub
-	outbound  chan *discordgo.WebhookParams
+	outbound  chan outboundMessage
 
 	webhookMu sync.Mutex
 	webhook   *discordgo.Webhook
@@ -74,7 +76,7 @@ func Start() {
 		session:   session,
 		channelID: config.DiscordChannelID,
 		hub:       NewHub(),
-		outbound:  make(chan *discordgo.WebhookParams, outboundCapacity),
+		outbound:  make(chan outboundMessage, outboundCapacity),
 	}
 	session.AddHandler(b.onDiscordMessage)
 	if err := session.Open(); err != nil {
@@ -147,64 +149,83 @@ func (b *Bridge) onGameEvent(event Event) {
 	ctx, cancel := context.WithTimeout(context.Background(), resolveTimeout)
 	defer cancel()
 
-	var params *discordgo.WebhookParams
+	var message outboundMessage
 	switch event.Type {
 	case EventChat:
 		if strings.TrimSpace(event.Text) == "" {
 			return
 		}
-		params = &discordgo.WebhookParams{
-			Username:  webhookUsername(playerName(ctx, event.UUID, event.Username)),
-			AvatarURL: model.AvatarURL(event.UUID),
-			Content:   event.Text,
+		message.chat = &discordgo.WebhookParams{
+			Username:        webhookUsername(playerName(ctx, event.UUID, event.Username)),
+			AvatarURL:       model.AvatarURL(event.UUID),
+			Content:         event.Text,
+			AllowedMentions: noMentions(),
 		}
 	case EventJoin:
-		params = b.playerEmbed(ctx, event, "joined the server", colorJoin)
+		message.notice = b.playerNotice(ctx, event, "joined the server", colorJoin)
 	case EventQuit:
-		params = b.playerEmbed(ctx, event, "left the server", colorQuit)
+		message.notice = b.playerNotice(ctx, event, "left the server", colorQuit)
 	case EventDeath:
-		params = embed(event.Text, model.AvatarURL(event.UUID), colorDeath)
+		message.notice = notice(event.Text+" 💀", model.AvatarURL(event.UUID), colorDeath)
 	case EventAdvancement:
 		name := playerName(ctx, event.UUID, event.Username)
-		params = embed(name+" has made the advancement "+event.Text, model.AvatarURL(event.UUID), colorAdvancement)
+		message.notice = notice(name+" has made the advancement "+event.Text+"!", model.AvatarURL(event.UUID), colorAdvancement)
 	case EventServer:
 		switch event.State {
 		case "started":
-			params = embed("Server started", "", colorJoin)
+			message.notice = notice("Server started", "", colorJoin)
 		case "stopping":
-			params = embed("Server stopping", "", colorQuit)
+			message.notice = notice("Server stopping", "", colorQuit)
 		}
 	}
-	if params == nil {
+	if message.chat == nil && message.notice == nil {
 		return
 	}
-	// Nothing the game sends may ping anyone.
-	params.AllowedMentions = &discordgo.MessageAllowedMentions{Parse: []discordgo.AllowedMentionType{}}
 	select {
-	case b.outbound <- params:
+	case b.outbound <- message:
 	default:
 		logger.SugarLogger.Warnf("bridge: Discord queue full, dropping %s event", event.Type)
 	}
 }
 
-func (b *Bridge) playerEmbed(ctx context.Context, event Event, action string, color int) *discordgo.WebhookParams {
-	return embed(playerName(ctx, event.UUID, event.Username)+" "+action, model.AvatarURL(event.UUID), color)
+// outboundMessage is exactly one of a chat line, posted through the webhook
+// as the player, or a notice embed, posted by the bot. They share one queue
+// so Discord shows them in the order they happened.
+type outboundMessage struct {
+	chat   *discordgo.WebhookParams
+	notice *discordgo.MessageSend
 }
 
-func embed(title string, iconURL string, color int) *discordgo.WebhookParams {
-	return &discordgo.WebhookParams{
+// noMentions stops anything the game sends from pinging anyone.
+func noMentions() *discordgo.MessageAllowedMentions {
+	return &discordgo.MessageAllowedMentions{Parse: []discordgo.AllowedMentionType{}}
+}
+
+func (b *Bridge) playerNotice(ctx context.Context, event Event, action string, color int) *discordgo.MessageSend {
+	return notice(playerName(ctx, event.UUID, event.Username)+" "+action, model.AvatarURL(event.UUID), color)
+}
+
+func notice(title string, iconURL string, color int) *discordgo.MessageSend {
+	return &discordgo.MessageSend{
 		Embeds: []*discordgo.MessageEmbed{{
 			Author: &discordgo.MessageEmbedAuthor{Name: truncate(title, 256), IconURL: iconURL},
 			Color:  color,
 		}},
+		AllowedMentions: noMentions(),
 	}
 }
 
-// deliver sends webhook messages one at a time so Discord shows them in the
-// order they happened. discordgo waits out rate limits on each call.
+// deliver sends one message at a time so Discord shows them in the order
+// they happened. discordgo waits out rate limits on each call.
 func (b *Bridge) deliver() {
-	for params := range b.outbound {
-		if err := b.execute(params); err != nil {
+	for message := range b.outbound {
+		var err error
+		if message.chat != nil {
+			err = b.execute(message.chat)
+		} else {
+			_, err = b.session.ChannelMessageSendComplex(b.channelID, message.notice)
+		}
+		if err != nil {
 			logger.SugarLogger.Warnf("bridge: send to Discord: %v", err)
 		}
 	}
