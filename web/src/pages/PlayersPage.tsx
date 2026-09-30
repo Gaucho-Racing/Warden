@@ -104,7 +104,7 @@ export default function PlayersPage() {
               />
               <div className="text-xs text-muted-foreground">
                 {account.last_seen_at && !account.last_seen_at.startsWith("0001")
-                  ? `Seen ${new Date(account.last_seen_at).toLocaleDateString()}`
+                  ? `Last seen ${new Date(account.last_seen_at).toLocaleDateString()}`
                   : "Never seen"}
               </div>
               {/* Mirrors DeleteAccount: admins can unlink anyone, members only themselves. */}
