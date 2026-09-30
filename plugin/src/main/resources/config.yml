@@ -31,7 +31,8 @@ stats:
 # back. That is deliberate: if Warden cannot say who somebody is, nobody
 # roams.
 
-# Unlinked players join normally but are confined to spawn until they link.
+# Players without warden.play (unlinked, or linked but in no group that grants
+# it) join normally but are confined to spawn in adventure mode.
 confinement:
   enabled: true
   # Radius in blocks from the world spawn point.
@@ -40,3 +41,6 @@ confinement:
   # player pushes against the boundary. Movement fires every tick, so this
   # is a throttle rather than a schedule.
   reminder-seconds: 2
+  # Shown to linked players without warden.play, in chat on join and in the
+  # action bar when they hit a restriction. Name the group that grants it.
+  no-access-message: "You must be a member of the MinecraftPlayers group to play on this server!"

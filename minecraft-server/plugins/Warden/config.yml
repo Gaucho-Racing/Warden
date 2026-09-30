@@ -14,3 +14,4 @@ confinement:
   enabled: true
   radius: 32
   reminder-seconds: 2
+  no-access-message: "You must be a member of the MinecraftPlayers group to play on this server!"

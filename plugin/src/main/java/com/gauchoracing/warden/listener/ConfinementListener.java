@@ -1,5 +1,6 @@
 package com.gauchoracing.warden.listener;
 
+import com.gauchoracing.warden.Permissions;
 import com.gauchoracing.warden.PlayerState;
 import java.util.Map;
 import java.util.UUID;
@@ -32,13 +33,10 @@ import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.inventory.ItemStack;
 
 /**
- * Keeps unlinked players near spawn, and unable to change the world or hurt
- * anything there, until they link.
- *
- * <p>Deliberately does not change game mode. Forcing adventure would strip
- * creative from an unlinked admin and there is nothing reliable to restore
- * afterwards; confining movement achieves the same thing without mutating
- * state Warden does not own.
+ * Keeps anyone without {@link Permissions#PLAY} near spawn, and unable to
+ * change the world or hurt anything there. That covers unlinked players and
+ * linked players outside every group that grants it; the two only differ in
+ * what they are told to do about it. Game mode is GameModeListener's job.
  */
 public final class ConfinementListener implements Listener {
 
@@ -50,6 +48,7 @@ public final class ConfinementListener implements Listener {
     private final double radius;
     private final boolean enabled;
     private final long reminderMillis;
+    private final String noAccessMessage;
     private final Map<UUID, Long> lastReminder = new ConcurrentHashMap<>();
 
     public ConfinementListener(
@@ -57,12 +56,14 @@ public final class ConfinementListener implements Listener {
             PlayerState state,
             double radius,
             boolean enabled,
-            java.time.Duration reminderInterval) {
+            java.time.Duration reminderInterval,
+            String noAccessMessage) {
         this.server = server;
         this.state = state;
         this.radius = radius;
         this.enabled = enabled;
         this.reminderMillis = reminderInterval.toMillis();
+        this.noAccessMessage = noAccessMessage;
     }
 
     /**
@@ -85,7 +86,7 @@ public final class ConfinementListener implements Listener {
             return;
         }
         Player player = event.getPlayer();
-        if (!state.isUnlinked(player.getUniqueId()) || withinBounds(player.getLocation())) {
+        if (!isRestricted(player) || withinBounds(player.getLocation())) {
             return;
         }
         player.teleportAsync(spawn());
@@ -104,7 +105,7 @@ public final class ConfinementListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        remind(event.getPlayer(), LEAVE_REMINDER);
+        remind(event.getPlayer(), leaveReminder(event.getPlayer()));
     }
 
     /**
@@ -131,7 +132,7 @@ public final class ConfinementListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        remind(event.getPlayer(), LEAVE_REMINDER);
+        remind(event.getPlayer(), leaveReminder(event.getPlayer()));
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -169,7 +170,7 @@ public final class ConfinementListener implements Listener {
         if (item == null || !item.getType().isEdible()) {
             event.setUseItemInHand(Event.Result.DENY);
         }
-        remind(event.getPlayer(), BUILD_REMINDER);
+        remind(event.getPlayer(), buildReminder(event.getPlayer()));
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -209,7 +210,16 @@ public final class ConfinementListener implements Listener {
     }
 
     private boolean isRestricted(Player player) {
-        return enabled && state.isUnlinked(player.getUniqueId());
+        return enabled && !player.hasPermission(Permissions.PLAY);
+    }
+
+    /** Linking is the fix for an unlinked player; a group is the fix for everyone else. */
+    private String leaveReminder(Player player) {
+        return state.isUnlinked(player.getUniqueId()) ? LEAVE_REMINDER : noAccessMessage;
+    }
+
+    private String buildReminder(Player player) {
+        return state.isUnlinked(player.getUniqueId()) ? BUILD_REMINDER : noAccessMessage;
     }
 
     private void deny(Player player, Cancellable event) {
@@ -217,7 +227,7 @@ public final class ConfinementListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        remind(player, BUILD_REMINDER);
+        remind(player, buildReminder(player));
     }
 
     /**
