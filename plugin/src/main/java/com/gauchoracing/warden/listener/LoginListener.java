@@ -1,5 +1,6 @@
 package com.gauchoracing.warden.listener;
 
+import com.gauchoracing.warden.DisplayNames;
 import com.gauchoracing.warden.Errors;
 import com.gauchoracing.warden.Permissions;
 import com.gauchoracing.warden.PlayerState;
@@ -77,7 +78,7 @@ public final class LoginListener implements Listener {
         }
 
         if (resolved.linked()) {
-            state.markLinked(uuid);
+            state.markLinked(uuid, resolved.displayName());
         } else {
             state.markUnlinked(uuid);
         }
@@ -87,6 +88,13 @@ public final class LoginListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
         String username = event.getPlayer().getName();
+
+        // The join message is built before this event, from the old name.
+        DisplayNames.apply(event.getPlayer(), state.firstName(uuid));
+        if (event.joinMessage() != null) {
+            event.joinMessage(Component.translatable(
+                    "multiplayer.player.joined", NamedTextColor.YELLOW, event.getPlayer().displayName()));
+        }
 
         plugin.runAsync(() -> {
             try {

@@ -18,6 +18,7 @@ public record ResolvedPermissions(
         String username,
         boolean linked,
         String entityId,
+        String displayName,
         List<String> sentinelGroups,
         List<String> luckpermsGroups,
         List<String> permissions) {
@@ -27,6 +28,6 @@ public record ResolvedPermissions(
     }
 
     public static ResolvedPermissions unlinked(UUID uuid, String username) {
-        return new ResolvedPermissions(uuid, username, false, null, List.of(), List.of(), List.of());
+        return new ResolvedPermissions(uuid, username, false, null, null, List.of(), List.of(), List.of());
     }
 }

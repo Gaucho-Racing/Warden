@@ -1,10 +1,12 @@
 package com.gauchoracing.warden.task;
 
+import com.gauchoracing.warden.DisplayNames;
 import com.gauchoracing.warden.Errors;
 import com.gauchoracing.warden.PlayerState;
 import com.gauchoracing.warden.WardenPlugin;
 import com.gauchoracing.warden.api.ResolvedPermissions;
 import com.gauchoracing.warden.api.SyncSnapshot;
+import java.util.UUID;
 
 /**
  * The periodic reconcile.
@@ -54,7 +56,8 @@ public final class SyncTask implements Runnable {
                 plugin.applier()
                         .applyPlayer(player.uuid(), player.luckpermsGroups(),
                                 snapshot.managedGroupPrefix());
-                state.markLinked(player.uuid());
+                state.markLinked(player.uuid(), player.displayName());
+                refreshDisplayName(player.uuid());
                 applied++;
             } catch (Exception e) {
                 plugin.getLogger().warning("Warden: failed to apply " + player.username() + ": "
@@ -63,5 +66,13 @@ public final class SyncTask implements Runnable {
         }
         plugin.getLogger().info("Warden: sync applied " + snapshot.groups().size()
                 + " groups and " + applied + " players");
+    }
+
+    /** Picks up a name changed in Sentinel without waiting for a rejoin. */
+    private void refreshDisplayName(UUID uuid) {
+        var online = plugin.getServer().getPlayer(uuid);
+        if (online != null) {
+            online.getScheduler().run(plugin, task -> DisplayNames.apply(online, state.firstName(uuid)), null);
+        }
     }
 }
