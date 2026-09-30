@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gaucho-racing/warden/warden/bridge"
 	"github.com/gaucho-racing/warden/warden/config"
 	"github.com/gaucho-racing/warden/warden/pkg/logger"
 	"github.com/gaucho-racing/warden/warden/pkg/sentinel"
@@ -21,12 +22,46 @@ import (
 const MinecraftAdminGroup = "MinecraftAdmins"
 
 func Run() {
-	api := InitializeRouter()
-	InitializeRoutes(api)
-	err := api.Run(":" + config.Port)
-	if err != nil {
+	router := InitializeRouter()
+	InitializeRoutes(router)
+	handler := withPluginSocket(router, http.HandlerFunc(serveBridge))
+	if err := http.ListenAndServe(":"+config.Port, handler); err != nil {
 		logger.SugarLogger.Fatalf("Failed to start server: %v", err)
 	}
+}
+
+const pluginSocketPath = "/plugin/bridge"
+
+// withPluginSocket serves the plugin's WebSocket outside gin. coder/websocket
+// calls gin's WriteHeaderNow before hijacking (a workaround for older gin),
+// and gin 1.11 refuses to hijack a response it considers written, so the
+// upgrade cannot go through a gin handler at all. The token check mirrors
+// AuthChecker's plugin branch.
+func withPluginSocket(router http.Handler, socket http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != pluginSocketPath {
+			router.ServeHTTP(w, r)
+			return
+		}
+		header := r.Header.Get("Authorization")
+		bearer, ok := strings.CutPrefix(header, "Bearer ")
+		if !ok || subtle.ConstantTimeCompare([]byte(bearer), []byte(config.PluginToken)) != 1 {
+			http.Error(w, `{"error":"invalid plugin token"}`, http.StatusUnauthorized)
+			return
+		}
+		socket.ServeHTTP(w, r)
+	})
+}
+
+// serveBridge answers 503 when the bridge is off, which the plugin treats as
+// "retry later".
+func serveBridge(w http.ResponseWriter, r *http.Request) {
+	b := bridge.Current()
+	if b == nil {
+		http.Error(w, `{"error":"discord bridge is disabled"}`, http.StatusServiceUnavailable)
+		return
+	}
+	b.ServePlugin(w, r)
 }
 
 func InitializeRouter() *gin.Engine {
@@ -84,7 +119,6 @@ func InitializeRoutes(router *gin.Engine) {
 	router.POST("/plugin/players/:uuid/seen", MarkPlayerSeen)
 	router.POST("/plugin/players/:uuid/stats", ReportPlayerStats)
 	router.GET("/plugin/sync", SyncAllPlayers)
-	router.GET("/plugin/bridge", ServeBridge)
 }
 
 // AuthChecker resolves one of two independent credentials depending on the

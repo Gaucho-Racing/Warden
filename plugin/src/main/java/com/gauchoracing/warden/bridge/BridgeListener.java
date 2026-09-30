@@ -102,14 +102,18 @@ public final class BridgeListener implements Listener {
         if (!message.has("type") || !"discord_message".equals(message.get("type").getAsString())) {
             return;
         }
-        // Same "Name: text" shape as game chat (see the warden datapack), with
-        // the name in blurple instead of a [Discord] prefix.
-        Component line = Component.text()
-                .append(Component.text(message.get("name").getAsString(), DISCORD_BLURPLE))
-                .append(Component.text(": ", NamedTextColor.WHITE))
-                .append(Component.text(message.get("text").getAsString()))
-                .build();
+        // Same "Name (username) » text" shape as game chat (see the warden
+        // datapack and DisplayNames), with the first name in blurple instead
+        // of a [Discord] prefix.
+        var line = Component.text()
+                .append(Component.text(message.get("name").getAsString(), DISCORD_BLURPLE));
+        if (message.has("username")) {
+            line.append(Component.text(" (" + message.get("username").getAsString() + ")", NamedTextColor.GRAY));
+        }
+        line.append(Component.text(" » ", NamedTextColor.WHITE))
+                .append(Component.text(message.get("text").getAsString()));
+        Component rendered = line.build();
         Server server = plugin.getServer();
-        server.getGlobalRegionScheduler().run(plugin, task -> server.sendMessage(line));
+        server.getGlobalRegionScheduler().run(plugin, task -> server.sendMessage(rendered));
     }
 }

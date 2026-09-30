@@ -110,8 +110,8 @@ func (b *Bridge) onDiscordMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), resolveTimeout)
 	defer cancel()
-	name := b.names.discordAuthor(ctx, m.Author.ID, discordDisplayName(m))
-	b.hub.Broadcast(DiscordMessage{Type: MessageDiscord, Name: name, Text: text})
+	name, username := b.names.discordAuthor(ctx, m.Author.ID, discordDisplayName(m))
+	b.hub.Broadcast(DiscordMessage{Type: MessageDiscord, Name: name, Username: username, Text: text})
 }
 
 // renderForGame flattens a Discord message to one plain line. Mentions become
