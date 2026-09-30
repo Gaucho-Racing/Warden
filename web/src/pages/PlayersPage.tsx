@@ -9,13 +9,28 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/lib/auth"
-import { errorMessage, useAccounts, useUnlinkAccount } from "@/lib/warden"
+import { errorMessage, type MinecraftAccount, useAccounts, useUnlinkAccount } from "@/lib/warden"
 
 function formatPlaytime(minutes: number) {
   const hours = Math.floor(minutes / 60)
   if (hours === 0) return `${minutes}m`
   if (hours < 100) return `${hours}h ${minutes % 60}m`
   return `${hours.toLocaleString()}h`
+}
+
+// Go's zero time, which the API sends for a player who has never joined.
+function seenAt(account: MinecraftAccount) {
+  const value = account.last_seen_at
+  return value && !value.startsWith("0001") ? new Date(value).getTime() : null
+}
+
+function formatLastSeen(seen: number | null) {
+  if (seen === null) return "Never seen"
+  const minutes = Math.floor((Date.now() - seen) / 60_000)
+  if (minutes < 1) return "Last seen just now"
+  if (minutes < 60) return `Last seen ${minutes}m ago`
+  if (minutes < 24 * 60) return `Last seen ${Math.floor(minutes / 60)}h ago`
+  return `Last seen ${new Date(seen).toLocaleDateString()}`
 }
 
 function RosterStat({ label, value }: { label: string; value: string }) {
@@ -34,15 +49,18 @@ export default function PlayersPage() {
   const [filter, setFilter] = useState("")
 
   const term = filter.trim().toLowerCase()
-  const rows = (accounts.data ?? []).filter((account) => {
-    if (!term) return true
-    return (
-      account.username.toLowerCase().includes(term) ||
-      account.uuid.includes(term) ||
-      (account.identity?.name ?? "").toLowerCase().includes(term) ||
-      (account.identity?.username ?? "").toLowerCase().includes(term)
-    )
-  })
+  const rows = (accounts.data ?? [])
+    .filter((account) => {
+      if (!term) return true
+      return (
+        account.username.toLowerCase().includes(term) ||
+        account.uuid.includes(term) ||
+        (account.identity?.name ?? "").toLowerCase().includes(term) ||
+        (account.identity?.username ?? "").toLowerCase().includes(term)
+      )
+    })
+    // Most recently seen first; players who have never joined go last.
+    .sort((a, b) => (seenAt(b) ?? 0) - (seenAt(a) ?? 0))
 
   return (
     <PageContainer>
@@ -102,11 +120,7 @@ export default function PlayersPage() {
                 label="Sessions"
                 value={account.stats ? account.stats.sessions.toLocaleString() : "—"}
               />
-              <div className="text-xs text-muted-foreground">
-                {account.last_seen_at && !account.last_seen_at.startsWith("0001")
-                  ? `Last seen ${new Date(account.last_seen_at).toLocaleDateString()}`
-                  : "Never seen"}
-              </div>
+              <div className="text-xs text-muted-foreground">{formatLastSeen(seenAt(account))}</div>
               {/* Mirrors DeleteAccount: admins can unlink anyone, members only themselves. */}
               {(isMinecraftAdmin || account.entity_id === user?.entity_id) && (
                 <Button
