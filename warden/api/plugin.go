@@ -157,6 +157,8 @@ type serverStatusReport struct {
 	MSPT          float64 `json:"mspt"`
 	// Epoch milliseconds, as the JVM reports its own start time.
 	StartedAt int64 `json:"started_at"`
+	// Sent once from onDisable in place of a sample.
+	Stopping bool `json:"stopping"`
 }
 
 // ReportServerStatus ingests the plugin's periodic server health sample. It
@@ -166,6 +168,11 @@ func ReportServerStatus(c *gin.Context) {
 	var report serverStatusReport
 	if err := c.ShouldBindJSON(&report); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if report.Stopping {
+		service.MarkServerStopping()
+		c.Status(http.StatusNoContent)
 		return
 	}
 	status := model.ServerStatus{

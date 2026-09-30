@@ -18,8 +18,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useAuth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
+import { type ServerState, useServerStatus } from "@/lib/warden"
 
 const mobileItems = [
   { to: "/", label: "Home", icon: PixelHouse, adminOnly: false },
@@ -42,6 +44,46 @@ function initials(name: string) {
     .slice(0, 2)
     .join("")
     .toUpperCase()
+}
+
+const stateDot: Record<ServerState, string> = {
+  active: "bg-primary",
+  empty: "bg-amber-400",
+  offline: "bg-destructive",
+}
+
+function formatUptime(minutes: number) {
+  const days = Math.floor(minutes / 1440)
+  const hours = Math.floor((minutes % 1440) / 60)
+  if (days > 0) return `${days}d ${hours}h`
+  if (hours > 0) return `${hours}h ${minutes % 60}m`
+  return `${minutes}m`
+}
+
+// Compact version of the Discord channel topic; the tooltip has it in full.
+function ServerStatusLine() {
+  const { data: status } = useServerStatus()
+  if (!status) return null
+
+  const offline = status.state === "offline"
+  const summary = offline
+    ? "Server offline"
+    : `${status.online}/${status.max_players} online · ${status.unique_players} joined · up ${formatUptime(status.uptime_minutes)}`
+  const detail = offline
+    ? `Server offline | ${status.unique_players} unique players ever joined`
+    : `${status.online}/${status.max_players} players online | ${status.unique_players} unique players ever joined | Server online for ${status.uptime_minutes} minutes`
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="hidden items-center gap-2 font-pixel text-sm text-muted-foreground sm:flex">
+          <span className={cn("size-2.5 shrink-0", stateDot[status.state])} aria-hidden />
+          <span>{summary}</span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>{detail}</TooltipContent>
+    </Tooltip>
+  )
 }
 
 function HeaderUserMenu() {
@@ -131,6 +173,7 @@ export function AppHeader() {
 
       <div className="flex-1" />
 
+      <ServerStatusLine />
       <HeaderUserMenu />
     </header>
   )

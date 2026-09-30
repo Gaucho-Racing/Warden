@@ -15,42 +15,19 @@ const (
 	// Discord allows two channel edits per ten minutes, so the topic is
 	// rewritten at most this often and only when its text changed.
 	topicInterval = 10 * time.Minute
-	// The plugin reports every minute; missing a couple of reports means the
-	// server is gone even if it never said "stopping" (a crash, say).
-	statusStaleAfter = 150 * time.Second
 )
 
 // presence tracks what was last sent to Discord so unchanged status and topic
-// are never resent.
+// are never resent. Whether the server is up is decided by the service layer,
+// so the web portal and Discord always agree.
 type presence struct {
 	mu        sync.Mutex
-	stoppedAt time.Time
 	lastState string
 	lastTopic string
 }
 
-// serverState is "active" (players online), "empty" or "offline".
-func (p *presence) serverState() (string, bool) {
-	status := service.LatestServerStatus()
-	p.mu.Lock()
-	stoppedAt := p.stoppedAt
-	p.mu.Unlock()
-	switch {
-	case status == nil:
-		return "offline", false
-	case status.RecordedAt.Before(stoppedAt) || time.Since(status.RecordedAt) > statusStaleAfter:
-		return "offline", true
-	case status.Online == 0:
-		return "empty", true
-	default:
-		return "active", true
-	}
-}
-
 func (b *Bridge) markStopping() {
-	b.presence.mu.Lock()
-	b.presence.stoppedAt = time.Now()
-	b.presence.mu.Unlock()
+	service.MarkServerStopping()
 	b.updatePresence()
 }
 
@@ -81,14 +58,14 @@ func (b *Bridge) runPresence() {
 // updatePresence shows "Playing Minecraft" throughout; the status dot carries
 // the server state, since a bot only ever displays one activity.
 func (b *Bridge) updatePresence() {
-	state, _ := b.presence.serverState()
+	state, _ := service.CurrentServerState()
 	b.presence.mu.Lock()
 	unchanged := state == b.presence.lastState
 	b.presence.mu.Unlock()
 	if unchanged {
 		return
 	}
-	dot := map[string]string{"active": "online", "empty": "idle", "offline": "dnd"}[state]
+	dot := map[string]string{service.ServerActive: "online", service.ServerEmpty: "idle", service.ServerOffline: "dnd"}[state]
 	err := b.session.UpdateStatusComplex(discordgo.UpdateStatusData{
 		Status:     dot,
 		Activities: []*discordgo.Activity{{Name: "Minecraft", Type: discordgo.ActivityTypeGame}},
@@ -103,13 +80,12 @@ func (b *Bridge) updatePresence() {
 }
 
 func (b *Bridge) updateTopic() {
-	state, known := b.presence.serverState()
-	if !known {
+	state, status := service.CurrentServerState()
+	if status == nil {
 		return
 	}
-	status := service.LatestServerStatus()
 	topic := fmt.Sprintf("Server offline | %d unique players ever joined", status.UniquePlayers)
-	if state != "offline" {
+	if state != service.ServerOffline {
 		topic = fmt.Sprintf("%d/%d players online | %d unique players ever joined | Server online for %d minutes",
 			status.Online, status.MaxPlayers, status.UniquePlayers, int(time.Since(status.StartedAt).Minutes()))
 	}
