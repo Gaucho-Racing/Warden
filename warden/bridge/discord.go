@@ -20,7 +20,9 @@ const (
 	webhookName      = "Warden"
 	maxGameMessage   = 256
 	outboundCapacity = 200
-	resolveTimeout   = 5 * time.Second
+	// Short enough that a Sentinel outage delays each message briefly before
+	// falling back to the plain name, rather than stalling the queue.
+	resolveTimeout = 2 * time.Second
 
 	colorJoin        = 0x57F287
 	colorQuit        = 0xED4245
@@ -41,7 +43,6 @@ type Bridge struct {
 	botID     string
 	channelID string
 	hub       *Hub
-	names     *names
 	outbound  chan *discordgo.WebhookParams
 
 	webhookMu sync.Mutex
@@ -73,7 +74,6 @@ func Start() {
 		session:   session,
 		channelID: config.DiscordChannelID,
 		hub:       NewHub(),
-		names:     newNames(),
 		outbound:  make(chan *discordgo.WebhookParams, outboundCapacity),
 	}
 	session.AddHandler(b.onDiscordMessage)
@@ -110,7 +110,7 @@ func (b *Bridge) onDiscordMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), resolveTimeout)
 	defer cancel()
-	name, username := b.names.discordAuthor(ctx, m.Author.ID, discordDisplayName(m))
+	name, username := discordAuthor(ctx, m.Author.ID, discordDisplayName(m))
 	b.hub.Broadcast(DiscordMessage{Type: MessageDiscord, Name: name, Username: username, Text: text})
 }
 
@@ -154,7 +154,7 @@ func (b *Bridge) onGameEvent(event Event) {
 			return
 		}
 		params = &discordgo.WebhookParams{
-			Username:  webhookUsername(b.names.player(ctx, event.UUID, event.Username)),
+			Username:  webhookUsername(playerName(ctx, event.UUID, event.Username)),
 			AvatarURL: model.AvatarURL(event.UUID),
 			Content:   event.Text,
 		}
@@ -165,7 +165,7 @@ func (b *Bridge) onGameEvent(event Event) {
 	case EventDeath:
 		params = embed(event.Text, model.AvatarURL(event.UUID), colorDeath)
 	case EventAdvancement:
-		name := b.names.player(ctx, event.UUID, event.Username)
+		name := playerName(ctx, event.UUID, event.Username)
 		params = embed(name+" has made the advancement "+event.Text, model.AvatarURL(event.UUID), colorAdvancement)
 	case EventServer:
 		switch event.State {
@@ -188,7 +188,7 @@ func (b *Bridge) onGameEvent(event Event) {
 }
 
 func (b *Bridge) playerEmbed(ctx context.Context, event Event, action string, color int) *discordgo.WebhookParams {
-	return embed(b.names.player(ctx, event.UUID, event.Username)+" "+action, model.AvatarURL(event.UUID), color)
+	return embed(playerName(ctx, event.UUID, event.Username)+" "+action, model.AvatarURL(event.UUID), color)
 }
 
 func embed(title string, iconURL string, color int) *discordgo.WebhookParams {
