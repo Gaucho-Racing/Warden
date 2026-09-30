@@ -37,4 +37,4 @@ ENV ONLINE_MODE=TRUE \
 # instead of leaving two copies of Warden side by side.
 COPY --from=builder /Warden.jar /plugins/Warden.jar
 COPY minecraft-server/plugins.txt /opt/warden/plugins.txt
-COPY minecraft-server/config.yml /plugins/Warden/config.yml
+COPY minecraft-server/plugins/ /plugins/
