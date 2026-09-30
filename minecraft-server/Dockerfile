@@ -18,23 +18,15 @@ ENV TYPE=PAPER \
     MODRINTH_PROJECTS=@/opt/warden/plugins.txt \
     SYNC_SKIP_NEWER_IN_DESTINATION=false
 
-# Warden trusts the Mojang-verified UUID, so online mode must stay on.
-ENV ONLINE_MODE=TRUE \
-    ENFORCE_SECURE_PROFILE=TRUE \
-    SERVER_NAME="Gaucho Racing" \
-    MOTD="§d§lGaucho Racing SMP§r\\n§kewewewewewewewewe" \
-    MODE=survival \
-    FORCE_GAMEMODE=TRUE \
-    DIFFICULTY=hard \
-    PVP=TRUE \
-    MAX_PLAYERS=100 \
-    VIEW_DISTANCE=12 \
-    SIMULATION_DISTANCE=8 \
-    SPAWN_PROTECTION=0 \
-    ENABLE_COMMAND_BLOCK=FALSE
+# server.properties is copied from /config rather than generated from env.
+# rcon-cli and graceful shutdown read RCON_PASSWORD, so it must match the file.
+ENV COPY_CONFIG_DEST=/data \
+    SKIP_SERVER_PROPERTIES=true \
+    RCON_PASSWORD=GauchoRacing123
 
 # Fixed filename so an upgrade overwrites the previous jar in /data/plugins
 # instead of leaving two copies of Warden side by side.
 COPY --from=builder /Warden.jar /plugins/Warden.jar
 COPY minecraft-server/plugins.txt /opt/warden/plugins.txt
 COPY minecraft-server/plugins/ /plugins/
+COPY minecraft-server/config/ /config/
