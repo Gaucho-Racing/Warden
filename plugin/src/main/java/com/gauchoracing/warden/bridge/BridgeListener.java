@@ -1,6 +1,7 @@
 package com.gauchoracing.warden.bridge;
 
 import com.gauchoracing.warden.Permissions;
+import com.gauchoracing.warden.backup.BackupTask;
 import com.gauchoracing.warden.staff.VanishManager;
 import com.google.gson.JsonObject;
 import io.papermc.paper.advancement.AdvancementDisplay;
@@ -27,6 +28,10 @@ import org.bukkit.plugin.Plugin;
  * <p>Only players with {@link Permissions#PLAY} have their chat relayed, so
  * people stuck at spawn cannot spam the Discord channel. Vanished staff are
  * never announced.
+ *
+ * <p>The socket is not only a chat relay. It is also how Warden commands the
+ * game server, so inbound messages are handled even when the chat half is
+ * switched off.
  */
 public final class BridgeListener implements Listener {
 
@@ -36,11 +41,13 @@ public final class BridgeListener implements Listener {
 
     private final Plugin plugin;
     private final VanishManager vanish;
+    private final BackupTask backup;
     private BridgeClient client;
 
-    public BridgeListener(Plugin plugin, VanishManager vanish) {
+    public BridgeListener(Plugin plugin, VanishManager vanish, BackupTask backup) {
         this.plugin = plugin;
         this.vanish = vanish;
+        this.backup = backup;
     }
 
     public void attach(BridgeClient client) {
@@ -100,9 +107,52 @@ public final class BridgeListener implements Listener {
      * formatting, click actions or commands.
      */
     public void onBridgeMessage(JsonObject message) {
-        if (!message.has("type") || !"discord_message".equals(message.get("type").getAsString())) {
+        if (!message.has("type")) {
             return;
         }
+        switch (message.get("type").getAsString()) {
+            case "discord_message" -> relayDiscordMessage(message);
+            case "announcement" -> showAnnouncement(message);
+            case "backup_start" -> startBackup(message);
+            default -> {
+                // Forward compatible: a newer Warden may send types this jar
+                // predates, and ignoring them is better than logging noise.
+            }
+        }
+    }
+
+    /** An operational notice from Warden, shown to everybody online. */
+    private void showAnnouncement(JsonObject message) {
+        if (!message.has("text")) {
+            return;
+        }
+        Component line = Component.text()
+                .append(Component.text("[Warden] ", NamedTextColor.GRAY))
+                .append(Component.text(message.get("text").getAsString(), NamedTextColor.GOLD))
+                .build();
+        Server server = plugin.getServer();
+        server.getGlobalRegionScheduler().run(plugin, task -> server.sendMessage(line));
+    }
+
+    private void startBackup(JsonObject message) {
+        if (backup == null) {
+            return;
+        }
+        backup.start(
+                string(message, "job_id"),
+                string(message, "upload_url"),
+                string(message, "method"),
+                string(message, "content_type"),
+                string(message, "file_name"));
+    }
+
+    private static String string(JsonObject message, String key) {
+        return message.has(key) && !message.get(key).isJsonNull()
+                ? message.get(key).getAsString()
+                : "";
+    }
+
+    private void relayDiscordMessage(JsonObject message) {
         // Same "Name (username) » text" shape as game chat (see the warden
         // datapack and DisplayNames), with the first name in blurple instead
         // of a [Discord] prefix.

@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom"
 
 import {
+  PixelChest,
   PixelGear,
   PixelGrassBlock,
   PixelHouse,
@@ -12,6 +13,7 @@ import { cn } from "@/lib/utils"
 const navItems = [
   { to: "/", label: "Home", icon: PixelHouse, adminOnly: false },
   { to: "/players", label: "Players", icon: PixelHeads, adminOnly: false },
+  { to: "/backups", label: "Backups", icon: PixelChest, adminOnly: false },
   { to: "/settings", label: "Settings", icon: PixelGear, adminOnly: false },
 ]
 

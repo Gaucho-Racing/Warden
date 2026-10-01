@@ -14,6 +14,7 @@ import (
 	"github.com/gaucho-racing/warden/warden/config"
 	"github.com/gaucho-racing/warden/warden/model"
 	"github.com/gaucho-racing/warden/warden/pkg/logger"
+	"github.com/gaucho-racing/warden/warden/service"
 )
 
 const (
@@ -36,11 +37,18 @@ var customEmoji = regexp.MustCompile(`<a?:(\w+):\d+>`)
 // Discord rejects webhook usernames containing these, case-insensitively.
 var reservedUsername = regexp.MustCompile(`(?i)discord|clyde`)
 
-// Bridge relays chat between the game and one Discord channel. Game chat goes
-// through a channel webhook so each message carries the player's name and
-// head; joins, deaths and other notices are posted by the bot itself.
-// Discord to game goes over the plugin WebSocket.
+// Bridge owns the plugin's WebSocket and, when Discord is configured, the
+// relay between that socket and one Discord channel. Game chat goes through
+// a channel webhook so each message carries the player's name and head;
+// joins, deaths and other notices are posted by the bot itself. Discord to
+// game goes back over the plugin WebSocket.
+//
+// The plugin socket is not conditional on Discord. It is also how Warden
+// commands the game server — backups, in particular — so it must come up
+// whether or not a bot token is set.
 type Bridge struct {
+	// session is nil when Discord is unconfigured or failed to connect.
+	// Everything Discord-side checks it first; the plugin socket does not.
 	session   *discordgo.Session
 	botID     string
 	channelID string
@@ -54,16 +62,38 @@ type Bridge struct {
 
 var current *Bridge
 
-// Current is nil when the bridge is disabled or failed to start.
+// Current is nil only before Start has run.
 func Current() *Bridge {
 	return current
 }
 
-// Start connects the bot. A failure is logged and leaves the bridge off, so
-// a Discord outage never stops Warden itself from serving the game.
+// DiscordConnected reports whether game events are reaching Discord.
+func (b *Bridge) DiscordConnected() bool {
+	return b.session != nil
+}
+
+// PluginConnected reports whether a game server is holding the socket open.
+// Commands are fire-and-forget broadcasts, so callers that need the game
+// server to actually act check this first rather than waiting for a reply
+// that will never come.
+func (b *Bridge) PluginConnected() bool {
+	return b.hub.Count() > 0
+}
+
+// Start brings up the plugin socket, then connects Discord if it is
+// configured. A Discord failure is logged and leaves the relay off: the game
+// server must keep working through a Discord outage, and a missing bot token
+// in development must not take the plugin socket with it.
 func Start() {
+	b := &Bridge{
+		hub:      NewHub(),
+		outbound: make(chan outboundMessage, outboundCapacity),
+	}
+	current = b
+	service.SetGameLink(b)
+
 	if !config.DiscordBridgeEnabled() {
-		logger.SugarLogger.Infof("bridge: DISCORD_TOKEN or DISCORD_CHANNEL_ID not set, Discord bridge disabled")
+		logger.SugarLogger.Infof("bridge: DISCORD_TOKEN or DISCORD_CHANNEL_ID not set, Discord relay disabled")
 		return
 	}
 	session, err := discordgo.New("Bot " + config.DiscordToken)
@@ -72,13 +102,6 @@ func Start() {
 		return
 	}
 	session.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentMessageContent
-
-	b := &Bridge{
-		session:   session,
-		channelID: config.DiscordChannelID,
-		hub:       NewHub(),
-		outbound:  make(chan outboundMessage, outboundCapacity),
-	}
 	session.AddHandler(b.onDiscordMessage)
 	session.AddHandler(b.onReady)
 	if err := session.Open(); err != nil {
@@ -92,10 +115,79 @@ func Start() {
 		return
 	}
 	b.botID = me.ID
+	b.channelID = config.DiscordChannelID
+	b.session = session
 	go b.deliver()
 	go b.runPresence()
-	current = b
 	logger.SugarLogger.Infof("bridge: connected to Discord, relaying channel %s", b.channelID)
+}
+
+// Announce posts an operational notice to Discord and into game chat. Both
+// are best effort: neither a disconnected game server nor a Discord outage
+// is a reason to fail whatever the notice was about.
+//
+// Notices are written for Discord and rewritten for the game, because the
+// two render almost nothing in common.
+func (b *Bridge) Announce(text string) {
+	b.hub.Broadcast(Announcement{Type: MessageAnnouncement, Text: gameText(text)})
+	b.queue(outboundMessage{notice: serverMessage(text)})
+}
+
+// gameText rewrites a notice written for Discord into something Minecraft
+// chat can show: bold markers appear literally there, and the default font
+// has no glyph for anything outside Latin-1, drawing a missing-character box
+// instead. Collapsing whitespace afterwards closes the gap an emoji leaves.
+//
+// Punctuation is transliterated rather than dropped. Deleting an em dash
+// turns "saving — expect lag" into "saving expect lag", which reads as a
+// typo; every other non-Latin-1 rune is decoration and can simply go.
+var gameTextReplacer = strings.NewReplacer(
+	"**", "",
+	"—", "-",
+	"–", "-",
+	"…", "...",
+	"‘", "'", "’", "'",
+	"“", `"`, "”", `"`,
+)
+
+func gameText(text string) string {
+	var stripped strings.Builder
+	stripped.Grow(len(text))
+	for _, r := range gameTextReplacer.Replace(text) {
+		if r <= 0xFF {
+			stripped.WriteRune(r)
+		}
+	}
+	return strings.Join(strings.Fields(stripped.String()), " ")
+}
+
+// StartBackup hands the game server a presigned URL and tells it to archive
+// itself. It reports only whether the command was dispatched; the outcome
+// comes back later over the plugin's HTTP API.
+func (b *Bridge) StartBackup(jobID string, uploadURL string, method string, contentType string, fileName string) error {
+	if !b.PluginConnected() {
+		return service.ErrGameServerOffline
+	}
+	b.hub.Broadcast(BackupCommand{
+		Type:        MessageBackupStart,
+		JobID:       jobID,
+		UploadURL:   uploadURL,
+		Method:      method,
+		ContentType: contentType,
+		FileName:    fileName,
+	})
+	return nil
+}
+
+func (b *Bridge) queue(message outboundMessage) {
+	if b.session == nil {
+		return
+	}
+	select {
+	case b.outbound <- message:
+	default:
+		logger.SugarLogger.Warnf("bridge: Discord queue full, dropping message")
+	}
 }
 
 // ServePlugin handles the plugin's WebSocket.
@@ -149,6 +241,15 @@ func discordDisplayName(m *discordgo.MessageCreate) string {
 }
 
 func (b *Bridge) onGameEvent(event Event) {
+	// Server state is recorded whether or not Discord is listening, so it
+	// is handled before the relay bails out.
+	if event.Type == EventServer && event.State == "stopping" {
+		b.markStopping()
+	}
+	if b.session == nil {
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), resolveTimeout)
 	defer cancel()
 
@@ -178,17 +279,12 @@ func (b *Bridge) onGameEvent(event Event) {
 			message.notice = serverMessage("✅ **Server has started**")
 		case "stopping":
 			message.notice = serverMessage("🛑 **Server has stopped**")
-			b.markStopping()
 		}
 	}
 	if message.chat == nil && message.notice == nil {
 		return
 	}
-	select {
-	case b.outbound <- message:
-	default:
-		logger.SugarLogger.Warnf("bridge: Discord queue full, dropping %s event", event.Type)
-	}
+	b.queue(message)
 }
 
 // outboundMessage is exactly one of a chat line, posted through the webhook

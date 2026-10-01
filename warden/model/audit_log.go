@@ -10,6 +10,10 @@ const (
 	AuditActionBindingUpdated    = "binding.updated"
 	AuditActionBindingDeleted    = "binding.deleted"
 	AuditActionPermissionsServed = "permissions.served"
+
+	AuditActionBackupScheduleUpdated = "backup.schedule_updated"
+	AuditActionBackupStarted         = "backup.started"
+	AuditActionBackupDownloaded      = "backup.downloaded"
 )
 
 type AuditLog struct {

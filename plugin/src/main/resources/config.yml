@@ -46,6 +46,25 @@ confinement:
   no-access-message: "You must be a member of the MinecraftPlayers group to play on this server!"
 
 # Discord chat bridge. The bot and channel are configured on the Warden
-# service; this only decides whether the plugin connects to it.
+# service; this only decides whether game chat is relayed. The socket itself
+# also carries Warden's commands, so it connects whenever either this or
+# backups are on.
 bridge:
   enabled: true
+
+# Server backups. Warden owns the schedule and the destination; the game
+# server is the only party that can read the world volume, so it is the one
+# that archives and uploads.
+#
+# A backup flushes every world and stops autosaving for the length of the
+# archive, which players see as a few seconds of lag. The .tar.gz is staged
+# in warden-backups/ next to the world and deleted once it is uploaded, so
+# the volume needs roughly half the world's size free to run one.
+backup:
+  enabled: true
+  # Ceiling on the upload to presigned storage. Generous because this is
+  # gigabytes over one request, not an API call.
+  upload-timeout-seconds: 1800
+  # Paths relative to the server directory to leave out, as either a file or
+  # a directory. The staging directory and session.lock are always excluded.
+  exclude: []

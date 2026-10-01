@@ -31,4 +31,37 @@ type DiscordMessage struct {
 	Text     string `json:"text"`
 }
 
-const MessageDiscord = "discord_message"
+// Announcement is an operational notice from Warden — a backup warning, say
+// — rendered as a highlighted line in game chat.
+//
+// It is pushed over this socket rather than left to the Discord relay,
+// because the relay deliberately ignores bot and webhook messages: without
+// that filter every game line Warden echoed to Discord would come straight
+// back into the game. So a notice Warden posts to Discord does not reach
+// players, and has to be sent to both places explicitly.
+type Announcement struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+// BackupCommand tells the game server to archive itself and PUT the result
+// to UploadURL. The URL is presigned against object storage, so the plugin
+// uploads without ever holding a Depot or Sentinel credential, and the
+// archive never passes through Warden.
+//
+// ContentType must be echoed verbatim on the PUT: it is part of the
+// presignature, and object storage rejects a mismatch.
+type BackupCommand struct {
+	Type        string `json:"type"`
+	JobID       string `json:"job_id"`
+	UploadURL   string `json:"upload_url"`
+	Method      string `json:"method"`
+	ContentType string `json:"content_type"`
+	FileName    string `json:"file_name"`
+}
+
+const (
+	MessageDiscord      = "discord_message"
+	MessageAnnouncement = "announcement"
+	MessageBackupStart  = "backup_start"
+)

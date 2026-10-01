@@ -27,6 +27,9 @@ public final class WardenClient implements AutoCloseable {
             .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
             .create();
 
+    /** See completeBackup: long enough that a slow Warden does not lose a report. */
+    private static final Duration REPORT_TIMEOUT = Duration.ofSeconds(30);
+
     private final HttpClient http;
     private final String baseUrl;
     private final String token;
@@ -113,15 +116,53 @@ public final class WardenClient implements AutoCloseable {
                 null);
     }
 
+    /**
+     * Reports that the archive is built and the upload has started, so the
+     * portal shows a phase rather than one opaque "running" for minutes.
+     */
+    public void reportBackupProgress(String jobId, long archiveMillis, long sizeBytes)
+            throws IOException, InterruptedException {
+        String body = GSON.toJson(new BackupProgress("uploading", archiveMillis, sizeBytes));
+        send(
+                HttpRequest.newBuilder(URI.create(baseUrl + "/api/plugin/backups/" + enc(jobId) + "/progress"))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8)),
+                null);
+    }
+
+    /**
+     * The final word on a backup. Warden verifies the object with Depot
+     * rather than trusting the reported size, so this is a notification
+     * rather than an assertion.
+     */
+    public void completeBackup(String jobId, boolean ok, long sizeBytes, long archiveMillis,
+            long uploadMillis, String error) throws IOException, InterruptedException {
+        String body = GSON.toJson(new BackupResult(ok, sizeBytes, archiveMillis, uploadMillis, error));
+        send(
+                HttpRequest.newBuilder(URI.create(baseUrl + "/api/plugin/backups/" + enc(jobId) + "/complete"))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8)),
+                null,
+                // The default timeout is tuned for a player waiting on a join.
+                // A backup report is worth waiting longer for: losing it leaves
+                // the job hanging until Warden's own timeout.
+                REPORT_TIMEOUT);
+    }
+
     private <T> T get(String path, Class<T> type) throws IOException, InterruptedException {
         return send(HttpRequest.newBuilder(URI.create(baseUrl + path)).GET(), type);
     }
 
     private <T> T send(HttpRequest.Builder builder, Class<T> type)
             throws IOException, InterruptedException {
+        return send(builder, type, timeout);
+    }
+
+    private <T> T send(HttpRequest.Builder builder, Class<T> type, Duration requestTimeout)
+            throws IOException, InterruptedException {
         HttpRequest request = builder.header("Authorization", "Bearer " + token)
                 .header("Accept", "application/json")
-                .timeout(timeout)
+                .timeout(requestTimeout)
                 .build();
         HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
         int status = response.statusCode();
@@ -136,6 +177,11 @@ public final class WardenClient implements AutoCloseable {
     }
 
     private record LinkRequest(String uuid, String username) {}
+
+    private record BackupProgress(String phase, long archiveMillis, long sizeBytes) {}
+
+    private record BackupResult(
+            boolean ok, long sizeBytes, long archiveMillis, long uploadMillis, String error) {}
 
     /** Non-2xx from the service. Carries the status so callers can tell 409 from 502. */
     public static final class WardenApiException extends IOException {

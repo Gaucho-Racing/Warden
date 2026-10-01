@@ -53,12 +53,14 @@ func withPluginSocket(router http.Handler, socket http.Handler) http.Handler {
 	})
 }
 
-// serveBridge answers 503 when the bridge is off, which the plugin treats as
-// "retry later".
+// serveBridge answers 503 only if the socket is somehow served before
+// bridge.Start, which the plugin treats as "retry later". Whether Discord is
+// connected is irrelevant here — the socket also carries Warden's commands
+// to the game server.
 func serveBridge(w http.ResponseWriter, r *http.Request) {
 	b := bridge.Current()
 	if b == nil {
-		http.Error(w, `{"error":"discord bridge is disabled"}`, http.StatusServiceUnavailable)
+		http.Error(w, `{"error":"bridge is not running"}`, http.StatusServiceUnavailable)
 		return
 	}
 	b.ServePlugin(w, r)
@@ -111,6 +113,16 @@ func InitializeRoutes(router *gin.Engine) {
 
 	router.GET("/audit-logs", ListAuditLogs)
 
+	// Jobs are addressed under /backups/jobs rather than /backups/:id so
+	// every segment after /backups is static. gin's router will not place a
+	// named parameter beside a literal at the same position.
+	router.GET("/backups", GetBackupStatus)
+	router.POST("/backups", CreateBackup)
+	router.GET("/backups/schedule", GetBackupSchedule)
+	router.PUT("/backups/schedule", UpdateBackupSchedule)
+	router.GET("/backups/schedule/preview", PreviewBackupSchedule)
+	router.POST("/backups/jobs/:id/download-url", CreateBackupDownloadURL)
+
 	// Plugin realm. Authenticated by PLUGIN_TOKEN, not by Sentinel — the
 	// game server is a lower-trust client and never holds a Sentinel
 	// credential. Read-only with respect to Sentinel: nothing under here
@@ -120,6 +132,8 @@ func InitializeRoutes(router *gin.Engine) {
 	router.POST("/plugin/players/:uuid/seen", MarkPlayerSeen)
 	router.POST("/plugin/players/:uuid/stats", ReportPlayerStats)
 	router.POST("/plugin/server/status", ReportServerStatus)
+	router.POST("/plugin/backups/:id/progress", ReportBackupProgress)
+	router.POST("/plugin/backups/:id/complete", CompleteBackup)
 	router.GET("/plugin/sync", SyncAllPlayers)
 }
 

@@ -116,6 +116,14 @@ func (h *Hub) Broadcast(message any) {
 	}
 }
 
+// Count is how many game servers are connected. Normally one; briefly two
+// across a restart, and zero whenever the game server is down.
+func (h *Hub) Count() int {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return len(h.conns)
+}
+
 func (h *Hub) add(conn *pluginConn) {
 	h.mu.Lock()
 	defer h.mu.Unlock()

@@ -294,6 +294,120 @@ export function useAuditLogs() {
   })
 }
 
+export type BackupStatus =
+  | "pending"
+  | "archiving"
+  | "uploading"
+  | "succeeded"
+  | "failed"
+  | "timed_out"
+
+export type BackupJob = {
+  id: string
+  status: BackupStatus
+  trigger: "schedule" | "manual"
+  requested_by_entity_id: string
+  scheduled_for?: string
+  depot_file_id: string
+  depot_bucket: string
+  file_name: string
+  size_bytes: number
+  archive_millis: number
+  upload_millis: number
+  error?: string
+  started_at: string
+  finished_at?: string
+  created_at: string
+}
+
+export type BackupSchedule = {
+  cron: string
+  timezone: string
+  enabled: boolean
+  updated_by_entity_id: string
+  updated_at: string
+  next_runs: string[]
+  error?: string
+}
+
+export type BackupOverview = {
+  enabled: boolean
+  bucket: string
+  schedule: BackupSchedule
+  server_connected: boolean
+  active?: BackupJob
+  last?: BackupJob
+  jobs: BackupJob[]
+}
+
+export type SchedulePreview = {
+  cron: string
+  timezone: string
+  valid: boolean
+  error?: string
+  next_runs: string[]
+}
+
+export function backupIsActive(status: BackupStatus) {
+  return status === "pending" || status === "archiving" || status === "uploading"
+}
+
+// Polls fast while a backup is in flight so the phase and the finish land
+// without a refresh, and slowly otherwise — the next scheduled run only
+// moves once a day.
+export function useBackups() {
+  return useQuery({
+    queryKey: ["backups"],
+    queryFn: async () => (await api.get<BackupOverview>("/backups")).data,
+    refetchInterval: (query) =>
+      query.state.data?.active ? 3_000 : 30_000,
+  })
+}
+
+// Previews on the server rather than parsing cron in the browser, so what
+// the field shows is exactly what the scheduler will do.
+export function useSchedulePreview(cron: string, timezone: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["backups", "preview", cron, timezone],
+    queryFn: async () =>
+      (
+        await api.get<SchedulePreview>("/backups/schedule/preview", {
+          params: { cron, timezone, count: 3 },
+        })
+      ).data,
+    enabled: enabled && cron.trim().length > 0,
+    // A half-typed expression is answered with valid=false, not an error,
+    // so there is nothing worth retrying.
+    retry: false,
+    placeholderData: (previous) => previous,
+  })
+}
+
+export function useSaveBackupSchedule() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { cron: string; timezone: string; enabled: boolean }) =>
+      (await api.put<BackupSchedule>("/backups/schedule", input)).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["backups"] }),
+  })
+}
+
+export function useStartBackup() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => (await api.post<BackupJob>("/backups")).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["backups"] }),
+  })
+}
+
+export function useBackupDownloadURL() {
+  return useMutation({
+    mutationFn: async (id: string) =>
+      (await api.post<{ url: string; expires_at: string }>(`/backups/jobs/${id}/download-url`))
+        .data,
+  })
+}
+
 export function errorMessage(error: unknown, fallback: string) {
   const response = (error as { response?: { data?: { error?: string } } })?.response
   return response?.data?.error ?? fallback
