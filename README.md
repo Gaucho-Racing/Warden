@@ -26,18 +26,16 @@ Game server: `mc.gauchoracing.com`
 
 ## Features
 
-- Sentinel SSO for the portal, with `MinecraftAdmins` gating bindings, the backup schedule, starting a backup, and the audit log.
-- Account linking through a short-lived, single-use token: the plugin mints one for a Mojang-authenticated UUID and the player claims it in the browser.
-- Group bindings that map a Sentinel group onto a managed LuckPerms group, its permission nodes, and its weight.
+- Sentinel SSO, with `MinecraftAdmins` gating bindings, the backup schedule, and the audit log.
+- Account linking through a short-lived, single-use token claimed in the browser.
+- Group bindings mapping a Sentinel group onto a managed LuckPerms group, its permission nodes, and its weight.
 - Permission resolution at prelogin plus a periodic full reconcile, both sending complete desired state rather than deltas.
 - Fail-closed posture: if Warden is unreachable a player still joins, but with no managed groups and confined to spawn.
-- Only `warden-` prefixed LuckPerms groups are touched, so permissions granted by hand in-game survive a reconcile.
-- Discord chat bridge over a plugin WebSocket, with game chat relayed through a channel webhook carrying each player's name and head.
-- Player statistics and server health (TPS, MSPT, online count, uptime) reported by the plugin, with daily snapshots for seven-day deltas.
-- Scheduled whole-server backups to Depot on an editable cron, with the next runs previewed from the API so they always match what the scheduler will do.
-- Archives uploaded straight from the game server to object storage through a presigned URL, so a multi-gigabyte backup never passes through Warden or Depot.
+- Discord chat bridge over a plugin WebSocket, with game chat carrying each player's name and head.
+- Player statistics and server health, with daily snapshots for seven-day deltas.
+- Scheduled whole-server backups to Depot, uploaded straight from the game server through a presigned URL.
 - Staff tooling: `/fly` and `/vanish`, both permission-gated.
-- Audit logs for link tokens, account link and unlink, and every binding change.
+- Audit logs for link tokens, account links, binding changes, and backups.
 - Multi-architecture server, web, and Minecraft images published to GitHub Container Registry.
 
 ## Getting Started
@@ -143,21 +141,15 @@ Players without it join normally but are confined to spawn in adventure mode.
 Warden archives the whole game server on a schedule and uploads it to the `minecraft` bucket in [Depot](https://github.com/Gaucho-Racing/Depot).
 
 The world lives on a ReadWriteOnce volume mounted only into the game server pod, so Warden cannot read it.
-The plugin does the archiving: Warden mints a presigned upload URL from Depot and hands it over the bridge socket, and the `.tar.gz` goes from the game server straight to object storage, through neither Warden nor Depot.
-The archive is staged on the game server's own volume first, because a presigned `PUT` needs a `Content-Length` and the compressed size is not known until compression finishes — so a backup refuses to start unless roughly half the uncompressed server size is free.
+The plugin does the archiving: Warden mints a presigned upload URL from Depot and hands it over the bridge socket, and the `.tar.gz` goes from the game server straight to object storage.
+It is staged on the game server's own volume first, so a backup needs roughly half the uncompressed server size free to run, and only one runs at a time.
 
-Before archiving, the plugin flushes every world to disk and pauses autosave, so region files are never captured mid-write.
-Autosave resumes as soon as the archive is written rather than after the upload, so the world is frozen for seconds rather than for the length of the transfer.
-Plugin databases stay writable throughout and land crash-consistent, which SQLite and H2 are built to recover from, but they are not the clean point-in-time snapshot the worlds are.
+Every world is flushed and autosave paused for the length of the archive, so region files are never captured mid-write.
+Plugin databases stay writable and land crash-consistent, which SQLite and H2 recover from but which is not the clean point-in-time snapshot the worlds get.
 
-The schedule is a standard five-field cron expression evaluated in `BACKUP_TIMEZONE`, so a 4am backup stays at 4am across a daylight saving shift.
-`MinecraftAdmins` edit it in Settings, and the portal previews the next three runs by asking the API rather than parsing cron in the browser, so the preview and the scheduler cannot disagree.
-Everyone signed in can see the schedule, the run in progress, and the history; starting a backup is restricted.
-
-Players are warned before a backup, then again when it starts and when it finishes.
-Notices go to Discord and to game chat separately: the Discord relay ignores bot messages, which is what stops relayed game chat echoing back into the game, so a notice posted to Discord would never reach players on its own.
-
-Only one backup runs at a time, and a job the game server never reports the end of is timed out rather than blocking every backup after it.
+The schedule is a standard five-field cron expression evaluated in `BACKUP_TIMEZONE`, edited in Settings by `MinecraftAdmins`.
+Everyone signed in can see it, the run in progress, and the history.
+Players are warned before a backup and again when it starts and finishes, in Discord and in game chat.
 
 ## Release
 
