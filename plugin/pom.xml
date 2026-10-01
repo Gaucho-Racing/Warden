@@ -6,7 +6,7 @@
 
   <groupId>com.gauchoracing</groupId>
   <artifactId>warden-plugin</artifactId>
-  <version>1.10.1</version>
+  <version>1.10.2</version>
   <packaging>jar</packaging>
   <name>Warden</name>
   <description>Links Minecraft accounts to Sentinel and applies group-derived permissions</description>
