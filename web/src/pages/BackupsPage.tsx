@@ -218,21 +218,19 @@ function JobCard({ job, now }: { job: BackupJob; now: number }) {
         <div className="min-w-0 flex-1">
           <div className="truncate font-mono text-sm">{job.file_name || job.id}</div>
           <div className="truncate font-mono text-xs text-muted-foreground">{job.id}</div>
-          <div className="text-xs text-muted-foreground">
-            {relativeTimeCoarse(new Date(job.created_at), now)} ·{" "}
-            {job.trigger === "manual" ? "manual" : "scheduled"}
-          </div>
         </div>
+        <Figure label="Type" value={job.trigger === "manual" ? "Manual" : "Scheduled"} />
         {job.status === "succeeded" && (
           <>
             <Figure label="Size" value={bytes(job.size_bytes)} />
             <Figure label="Took" value={total ? duration(total) : "—"} />
           </>
         )}
+        <Figure label="When" value={relativeTimeCoarse(new Date(job.created_at), now)} />
+        {/* Full width on its own line: a message competing with four
+            figures for the same row wraps to something unreadable. */}
         {job.error && (
-          <div className="min-w-0 basis-full text-xs text-destructive sm:basis-auto sm:flex-1">
-            {job.error}
-          </div>
+          <div className="min-w-0 basis-full text-xs text-destructive">{job.error}</div>
         )}
       </CardContent>
     </Card>
@@ -251,9 +249,16 @@ function StatusBadge({ status }: { status: BackupStatus }) {
   )
 }
 
+/**
+ * One labelled figure in a job card's right-hand run.
+ *
+ * min-w rather than a fixed w: "Scheduled" is a good deal wider than
+ * "Manual", and a fixed column would wrap it onto a second line and make
+ * that one row taller than its neighbours.
+ */
 function Figure({ label, value }: { label: string; value: string }) {
   return (
-    <div className="w-20 text-right">
+    <div className="min-w-24 text-right whitespace-nowrap">
       <div className="font-pixel text-base leading-tight">{value}</div>
       <div className="text-xs text-muted-foreground">{label}</div>
     </div>
