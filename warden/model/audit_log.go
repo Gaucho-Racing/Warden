@@ -13,7 +13,6 @@ const (
 
 	AuditActionBackupScheduleUpdated = "backup.schedule_updated"
 	AuditActionBackupStarted         = "backup.started"
-	AuditActionBackupDownloaded      = "backup.downloaded"
 )
 
 type AuditLog struct {

@@ -154,13 +154,18 @@ type Download struct {
 }
 
 // CreateDownloadURL mints a link that fetches the archive straight from
-// Depot without a Sentinel session. The token is bearer authority over that
-// one file for an hour, which is why the route that calls this is restricted
-// to MinecraftAdmins — a world archive contains every player's inventory and
-// every sign on the map.
+// Depot without a Sentinel session.
 //
-// Depot builds the absolute URL from the request it sees, so the path is
-// rejoined to the configured origin here rather than trusted blindly.
+// Nothing calls this yet. It is kept for the restore path, which needs to
+// hand the game server a way to pull an archive back down, and that is the
+// one caller a world archive should ever have: the token is bearer
+// authority over the file for an hour, and the archive holds every player's
+// inventory and every sign on the map. Do not expose it to a browser again
+// without deciding that is acceptable.
+//
+// Depot builds the absolute URL from the request it sees, and gets the
+// scheme wrong behind the ingress, so the path is rejoined to the
+// configured origin here rather than trusted.
 func CreateDownloadURL(ctx context.Context, bucket string, fileID string) (Download, error) {
 	var download Download
 	path := "/api/buckets/" + url.PathEscape(bucket) + "/files/" + url.PathEscape(fileID) + "/download-url"

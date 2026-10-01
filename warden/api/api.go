@@ -113,15 +113,11 @@ func InitializeRoutes(router *gin.Engine) {
 
 	router.GET("/audit-logs", ListAuditLogs)
 
-	// Jobs are addressed under /backups/jobs rather than /backups/:id so
-	// every segment after /backups is static. gin's router will not place a
-	// named parameter beside a literal at the same position.
 	router.GET("/backups", GetBackupStatus)
 	router.POST("/backups", CreateBackup)
 	router.GET("/backups/schedule", GetBackupSchedule)
 	router.PUT("/backups/schedule", UpdateBackupSchedule)
 	router.GET("/backups/schedule/preview", PreviewBackupSchedule)
-	router.POST("/backups/jobs/:id/download-url", CreateBackupDownloadURL)
 
 	// Plugin realm. Authenticated by PLUGIN_TOKEN, not by Sentinel — the
 	// game server is a lower-trust client and never holds a Sentinel

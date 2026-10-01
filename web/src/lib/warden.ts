@@ -365,6 +365,16 @@ export function useBackups() {
   })
 }
 
+// The schedule on its own, for the settings editor. Keyed under "backups"
+// so saving, which invalidates that prefix, refreshes both this and the
+// backups page without either knowing about the other.
+export function useBackupSchedule() {
+  return useQuery({
+    queryKey: ["backups", "schedule"],
+    queryFn: async () => (await api.get<BackupSchedule>("/backups/schedule")).data,
+  })
+}
+
 // Previews on the server rather than parsing cron in the browser, so what
 // the field shows is exactly what the scheduler will do.
 export function useSchedulePreview(cron: string, timezone: string, enabled: boolean) {
@@ -398,14 +408,6 @@ export function useStartBackup() {
   return useMutation({
     mutationFn: async () => (await api.post<BackupJob>("/backups")).data,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["backups"] }),
-  })
-}
-
-export function useBackupDownloadURL() {
-  return useMutation({
-    mutationFn: async (id: string) =>
-      (await api.post<{ url: string; expires_at: string }>(`/backups/jobs/${id}/download-url`))
-        .data,
   })
 }
 

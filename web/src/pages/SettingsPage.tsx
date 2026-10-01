@@ -1,5 +1,6 @@
 import { PageContainer, PageHeader } from "@/components/PageContainer"
 import { MinecraftAccountSection } from "@/components/settings/MinecraftAccountSection"
+import { BackupScheduleSection } from "@/components/settings/BackupScheduleSection"
 import { BindingsSection } from "@/components/settings/BindingsSection"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -35,6 +36,8 @@ export default function SettingsPage() {
           <>
             <Separator />
             <BindingsSection />
+            <Separator />
+            <BackupScheduleSection />
           </>
         )}
       </div>

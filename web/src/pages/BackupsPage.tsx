@@ -1,10 +1,10 @@
-import { CircleAlert, Download, HardDriveDownload, Loader2 } from "lucide-react"
+import { CircleAlert, HardDriveDownload, Loader2 } from "lucide-react"
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { toast } from "sonner"
 
 import { PageContainer, PageHeader } from "@/components/PageContainer"
 import { SchedulePreview } from "@/components/backups/SchedulePreview"
-import { ScheduleEditor } from "@/components/backups/ScheduleEditor"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -25,7 +25,6 @@ import { cn } from "@/lib/utils"
 import {
   backupIsActive,
   errorMessage,
-  useBackupDownloadURL,
   useBackups,
   useStartBackup,
   type BackupJob,
@@ -108,43 +107,31 @@ export default function BackupsPage() {
         {active ? (
           <ActiveBackup job={active} />
         ) : (
-          <SchedulePreview
-            cron={schedule.cron}
-            timezone={schedule.timezone}
-            runs={schedule.next_runs}
-            error={schedule.error}
-            disabled={!schedule.enabled}
-          />
+          <div className="space-y-2">
+            <SchedulePreview
+              cron={schedule.cron}
+              timezone={schedule.timezone}
+              runs={schedule.next_runs}
+              error={schedule.error}
+              disabled={!schedule.enabled}
+            />
+            {/* The editor lives in Settings with the other admin controls,
+                so say where it went rather than leaving a dead end. */}
+            {isMinecraftAdmin && (
+              <div className="text-right">
+                <Button asChild variant="link" className="h-auto p-0 text-xs">
+                  <Link to="/settings">Change the schedule in Settings</Link>
+                </Button>
+              </div>
+            )}
+          </div>
         )}
 
         {last && (
           <section className="space-y-3">
             <h2 className="font-pixel text-xl">Last backup</h2>
-            <JobCard job={last} now={now} canDownload={isMinecraftAdmin} />
+            <JobCard job={last} now={now} />
           </section>
-        )}
-
-        {isMinecraftAdmin && (
-          <>
-            <Separator />
-            <section className="space-y-3">
-              <div>
-                <h2 className="font-pixel text-xl">Schedule</h2>
-                <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                  When automatic backups run. Players get a warning five minutes before a
-                  scheduled backup, and again when it starts and finishes.
-                </p>
-              </div>
-              <Card>
-                <CardContent className="p-5">
-                  <ScheduleEditor
-                    key={`${schedule.cron}|${schedule.timezone}|${schedule.enabled}`}
-                    schedule={schedule}
-                  />
-                </CardContent>
-              </Card>
-            </section>
-          </>
         )}
 
         <Separator />
@@ -160,7 +147,7 @@ export default function BackupsPage() {
           ) : (
             <div className="space-y-2">
               {jobs.map((job) => (
-                <JobCard key={job.id} job={job} now={now} canDownload={isMinecraftAdmin} />
+                <JobCard key={job.id} job={job} now={now} />
               ))}
             </div>
           )}
@@ -218,16 +205,7 @@ function ActiveBackup({ job }: { job: BackupJob }) {
   )
 }
 
-function JobCard({
-  job,
-  now,
-  canDownload,
-}: {
-  job: BackupJob
-  now: number
-  canDownload: boolean
-}) {
-  const download = useBackupDownloadURL()
+function JobCard({ job, now }: { job: BackupJob; now: number }) {
   const finished = job.finished_at ? new Date(job.finished_at) : null
   const total =
     job.archive_millis + job.upload_millis ||
@@ -239,6 +217,7 @@ function JobCard({
         <StatusBadge status={job.status} />
         <div className="min-w-0 flex-1">
           <div className="truncate font-mono text-sm">{job.file_name || job.id}</div>
+          <div className="truncate font-mono text-xs text-muted-foreground">{job.id}</div>
           <div className="text-xs text-muted-foreground">
             {relativeTimeCoarse(new Date(job.created_at), now)} ·{" "}
             {job.trigger === "manual" ? "manual" : "scheduled"}
@@ -254,29 +233,6 @@ function JobCard({
           <div className="min-w-0 basis-full text-xs text-destructive sm:basis-auto sm:flex-1">
             {job.error}
           </div>
-        )}
-        {canDownload && job.status === "succeeded" && (
-          <Button
-            variant="ghost"
-            size="icon"
-            disabled={download.isPending}
-            onClick={() =>
-              download.mutate(job.id, {
-                // Opened rather than navigated to, so the portal stays put
-                // while a multi-gigabyte download runs.
-                onSuccess: (result) => window.open(result.url, "_blank", "noopener"),
-                onError: (error) =>
-                  toast.error(errorMessage(error, "Could not create a download link")),
-              })
-            }
-          >
-            {download.isPending ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Download className="size-4" />
-            )}
-            <span className="sr-only">Download this backup</span>
-          </Button>
         )}
       </CardContent>
     </Card>

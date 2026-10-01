@@ -8,7 +8,6 @@ import (
 
 	"github.com/gaucho-racing/warden/warden/config"
 	"github.com/gaucho-racing/warden/warden/model"
-	"github.com/gaucho-racing/warden/warden/pkg/depot"
 	"github.com/gaucho-racing/warden/warden/service"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -217,47 +216,6 @@ func CreateBackup(c *gin.Context) {
 		UserAgent:       c.Request.UserAgent(),
 	})
 	c.JSON(http.StatusAccepted, job)
-}
-
-// CreateBackupDownloadURL mints a short-lived Depot link to a finished
-// archive. MinecraftAdmins only, and for a stronger reason than the button:
-// a world archive holds every player's inventory, every chest and every
-// sign on the map, and the link Depot returns is bearer authority over it.
-func CreateBackupDownloadURL(c *gin.Context) {
-	Require(c, RequestUserIsMinecraftAdmin(c))
-
-	job, err := service.GetBackupJob(c.Param("id"))
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		c.JSON(http.StatusNotFound, gin.H{"error": "backup not found"})
-		return
-	}
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	if job.Status != model.BackupStatusSucceeded || job.DepotFileID == "" {
-		c.JSON(http.StatusConflict, gin.H{"error": "this backup did not complete, so there is nothing to download"})
-		return
-	}
-
-	download, err := depot.CreateDownloadURL(c.Request.Context(), job.DepotBucket, job.DepotFileID)
-	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
-		return
-	}
-	service.RecordAudit(model.AuditLog{
-		Action:          model.AuditActionBackupDownloaded,
-		ActorEntityID:   GetRequestTokenEntityID(c),
-		ActorGroupNames: GetRequestTokenGroupNames(c),
-		TargetID:        job.ID,
-		Detail:          job.FileName,
-		RequestMethod:   c.Request.Method,
-		RequestPath:     c.Request.URL.Path,
-		IPAddress:       c.ClientIP(),
-		UserAgent:       c.Request.UserAgent(),
-	})
-	c.Header("Cache-Control", "no-store")
-	c.JSON(http.StatusOK, download)
 }
 
 // ------------------------------------------------------------ plugin realm
