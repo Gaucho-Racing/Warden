@@ -47,8 +47,31 @@ func DiscordBridgeEnabled() bool {
 	return DiscordToken != "" && DiscordChannelID != ""
 }
 
+// Depot is where server backups land. There is one Depot and one bucket for
+// this, both fixed, so they are constants rather than configuration — the
+// bucket's write grant names the Warden application specifically, which
+// makes pointing at a different one a Depot-side change anyway.
+//
+// Warden authenticates with the same Sentinel service-account token it uses
+// for group reads.
+const DepotURL = "https://depot.gauchoracing.com"
+const DepotBucket = "minecraft"
+
+// BackupTimezone is the IANA zone cron expressions are evaluated in. Without
+// it a schedule would silently shift twice a year, because the pod's clock
+// is UTC and "2am" means local time to whoever wrote the expression.
+var BackupTimezone = os.Getenv("BACKUP_TIMEZONE")
+
 var LinkTokenTTL time.Duration
 var GroupSyncInterval time.Duration
+
+// BackupWarningLead is how far ahead of a scheduled backup players are
+// warned. BackupManualDelay is the shorter grace period on a manual run,
+// where somebody is waiting on the button. BackupTimeout gives up on a job
+// the game server never reported the end of.
+var BackupWarningLead time.Duration
+var BackupManualDelay time.Duration
+var BackupTimeout time.Duration
 
 func IsProduction() bool {
 	return Env == "PROD"

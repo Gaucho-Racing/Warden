@@ -89,7 +89,26 @@ const HOUSE = [
   "............",
 ]
 
+const CHEST = [
+  "............",
+  "..XXXXXXXX..",
+  "..X......X..",
+  "..X..XX..X..",
+  "..XXXXXXXX..",
+  "..XXXXXXXX..",
+  "..X......X..",
+  "..X......X..",
+  "..X......X..",
+  "..XXXXXXXX..",
+  "............",
+  "............",
+]
+
 const mono = { X: "currentColor" }
+
+export function PixelChest(props: SVGProps<SVGSVGElement>) {
+  return <PixelArt grid={CHEST} palette={mono} {...props} />
+}
 
 export function PixelHeads(props: SVGProps<SVGSVGElement>) {
   return <PixelArt grid={HEADS} palette={mono} {...props} />

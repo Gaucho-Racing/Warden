@@ -42,6 +42,12 @@ services:
       SENTINEL_CLIENT_SECRET: ${SENTINEL_CLIENT_SECRET}
       SENTINEL_REDIRECT_URI: ${SENTINEL_REDIRECT_URI}
       SENTINEL_SA_TOKEN: ${SENTINEL_SA_TOKEN}
+      # Defaulted here as well as in the service so an existing .env keeps
+      # working without compose warning about four unset variables.
+      BACKUP_TIMEZONE: ${BACKUP_TIMEZONE:-America/Los_Angeles}
+      BACKUP_WARNING_LEAD: ${BACKUP_WARNING_LEAD:-5m}
+      BACKUP_MANUAL_DELAY: ${BACKUP_MANUAL_DELAY:-10s}
+      BACKUP_TIMEOUT: ${BACKUP_TIMEOUT:-60m}
 
   web:
     container_name: warden-web

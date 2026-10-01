@@ -18,3 +18,8 @@ confinement:
 
 bridge:
   enabled: true
+
+backup:
+  enabled: true
+  upload-timeout-seconds: 1800
+  exclude: []

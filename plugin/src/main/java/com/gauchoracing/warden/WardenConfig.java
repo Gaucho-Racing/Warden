@@ -1,6 +1,7 @@
 package com.gauchoracing.warden;
 
 import java.time.Duration;
+import java.util.List;
 import org.bukkit.configuration.file.FileConfiguration;
 
 /** Typed view of config.yml. */
@@ -15,7 +16,10 @@ public record WardenConfig(
         double confinementRadius,
         Duration confinementReminder,
         String noAccessMessage,
-        boolean bridgeEnabled) {
+        boolean bridgeEnabled,
+        boolean backupEnabled,
+        Duration backupUploadTimeout,
+        List<String> backupExcludes) {
 
     private static final String DEFAULT_NO_ACCESS_MESSAGE =
             "You must be a member of the MinecraftPlayers group to play on this server!";
@@ -32,6 +36,9 @@ public record WardenConfig(
                 c.getDouble("confinement.radius", 32),
                 Duration.ofSeconds(c.getLong("confinement.reminder-seconds", 2)),
                 c.getString("confinement.no-access-message", DEFAULT_NO_ACCESS_MESSAGE),
-                c.getBoolean("bridge.enabled", true));
+                c.getBoolean("bridge.enabled", true),
+                c.getBoolean("backup.enabled", true),
+                Duration.ofSeconds(c.getLong("backup.upload-timeout-seconds", 1800)),
+                c.getStringList("backup.exclude"));
     }
 }

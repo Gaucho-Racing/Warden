@@ -2,6 +2,7 @@ import { Navigate, createBrowserRouter } from "react-router-dom"
 
 import { AppShell } from "@/components/AppShell"
 import { RequireAuth } from "@/components/RequireAuth"
+import BackupsPage from "@/pages/BackupsPage"
 import HomePage from "@/pages/HomePage"
 import LinkPage from "@/pages/LinkPage"
 import LoginPage from "@/pages/LoginPage"
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
         children: [
           { path: "/", element: <HomePage /> },
           { path: "/players", element: <PlayersPage /> },
+          { path: "/backups", element: <BackupsPage /> },
           { path: "/players/:uuid", element: <PlayerPage /> },
           { path: "/settings", element: <SettingsPage /> },
           // Both folded into Settings; keep the old paths working.

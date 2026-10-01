@@ -1,6 +1,7 @@
 package com.gauchoracing.warden;
 
 import com.gauchoracing.warden.api.WardenClient;
+import com.gauchoracing.warden.backup.BackupTask;
 import com.gauchoracing.warden.bridge.BridgeClient;
 import com.gauchoracing.warden.bridge.BridgeListener;
 import com.gauchoracing.warden.listener.ConfinementListener;
@@ -33,6 +34,7 @@ public final class WardenPlugin extends JavaPlugin {
     private StatsReporter statsReporter;
     private BridgeClient bridge;
     private ServerStatusReporter serverStatus;
+    private BackupTask backup;
 
     /**
      * Owned rather than borrowed from Paper's async scheduler so shutdown can
@@ -105,14 +107,26 @@ public final class WardenPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(serverStatus, this);
         getServer().getGlobalRegionScheduler().runAtFixedRate(this, task -> serverStatus.report(), 100, 1200);
 
-        if (config.bridgeEnabled()) {
-            BridgeListener bridgeListener = new BridgeListener(this, vanish);
+        if (config.backupEnabled()) {
+            backup = new BackupTask(this, config.timeout(), config.backupUploadTimeout(),
+                    config.backupExcludes());
+        }
+
+        // The socket carries Warden's commands as well as Discord chat, so it
+        // comes up for either. Only the chat half is conditional on the
+        // bridge setting.
+        if (config.bridgeEnabled() || config.backupEnabled()) {
+            BridgeListener bridgeListener = new BridgeListener(this, vanish, backup);
             bridge = new BridgeClient(config.baseUrl(), config.token(), config.timeout(), getLogger(),
                     bridgeListener::onBridgeMessage);
             bridgeListener.attach(bridge);
-            getServer().getPluginManager().registerEvents(bridgeListener, this);
+            if (config.bridgeEnabled()) {
+                getServer().getPluginManager().registerEvents(bridgeListener, this);
+            }
             bridge.start();
-            bridge.send(Map.of("type", "server", "state", "started"));
+            if (config.bridgeEnabled()) {
+                bridge.send(Map.of("type", "server", "state", "started"));
+            }
         }
 
         statsReporter = new StatsReporter(this);
@@ -158,6 +172,11 @@ public final class WardenPlugin extends JavaPlugin {
         }
         if (bridge != null) {
             bridge.close(Map.of("type", "server", "state", "stopping"));
+        }
+        // A backup in flight is abandoned rather than waited out: the pod is
+        // going away, and Warden times the job out on its side.
+        if (backup != null) {
+            backup.shutdown();
         }
         io.shutdown();
         Duration grace = config.timeout().plusSeconds(2);

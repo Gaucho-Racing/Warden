@@ -10,6 +10,10 @@ import (
 const (
 	defaultLinkTokenTTL      = 15 * time.Minute
 	defaultGroupSyncInterval = 60 * time.Second
+	defaultBackupWarningLead = 5 * time.Minute
+	defaultBackupManualDelay = 10 * time.Second
+	defaultBackupTimeout     = 60 * time.Minute
+	defaultBackupTimezone    = "America/Los_Angeles"
 )
 
 func Verify() {
@@ -61,6 +65,32 @@ func Verify() {
 	}
 	LinkTokenTTL = durationOrDefault("LINK_TOKEN_TTL", defaultLinkTokenTTL)
 	GroupSyncInterval = durationOrDefault("GROUP_SYNC_INTERVAL", defaultGroupSyncInterval)
+	verifyBackups()
+}
+
+// verifyBackups never fails the boot. Backups are an add-on to running the
+// game server, so an unconfigured or misconfigured Depot leaves the feature
+// off and everything else working, rather than taking the service down.
+func verifyBackups() {
+	BackupWarningLead = durationOrDefault("BACKUP_WARNING_LEAD", defaultBackupWarningLead)
+	BackupManualDelay = durationOrDefault("BACKUP_MANUAL_DELAY", defaultBackupManualDelay)
+	BackupTimeout = durationOrDefault("BACKUP_TIMEOUT", defaultBackupTimeout)
+
+	if BackupTimezone == "" {
+		BackupTimezone = defaultBackupTimezone
+	}
+	if _, err := time.LoadLocation(BackupTimezone); err != nil {
+		logger.SugarLogger.Warnf("BACKUP_TIMEZONE %q is not a known IANA zone (%v), defaulting to %s", BackupTimezone, err, defaultBackupTimezone)
+		BackupTimezone = defaultBackupTimezone
+	}
+
+	// The service account is the only credential the backup path needs; the
+	// Depot origin and bucket are fixed.
+	if SentinelSAToken == "" {
+		logger.SugarLogger.Warnf("SENTINEL_SA_TOKEN is not set, server backups are disabled")
+		return
+	}
+	logger.SugarLogger.Infof("Server backups upload to %s bucket %q", DepotURL, DepotBucket)
 }
 
 func durationOrDefault(key string, fallback time.Duration) time.Duration {

@@ -21,7 +21,10 @@ func main() {
 	}
 	database.Init()
 	service.StartLinkTokenReaper()
+	// The bridge registers itself as the game link, so it has to be up
+	// before the scheduler can dispatch a backup to the game server.
 	bridge.Start()
+	service.StartBackupScheduler()
 
 	api.Run()
 }

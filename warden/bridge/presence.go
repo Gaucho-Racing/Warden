@@ -28,7 +28,9 @@ type presence struct {
 
 func (b *Bridge) markStopping() {
 	service.MarkServerStopping()
-	b.updatePresence()
+	if b.session != nil {
+		b.updatePresence()
+	}
 }
 
 // onReady forgets the last presence: a new gateway session starts with none.
