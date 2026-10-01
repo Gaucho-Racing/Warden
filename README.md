@@ -2,6 +2,7 @@
 
 [![build](https://github.com/Gaucho-Racing/Warden/actions/workflows/build.yml/badge.svg)](https://github.com/Gaucho-Racing/Warden/actions/workflows/build.yml)
 [![Release](https://img.shields.io/github/v/release/Gaucho-Racing/Warden?style=flat-square)](https://github.com/Gaucho-Racing/Warden/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Warden is Gaucho Racing's Sentinel integration for Minecraft servers.
 It links a player's Minecraft account to their Sentinel entity, then turns their Sentinel group membership into in-game permissions, so who can play and what they can do follows the same access model as every other internal tool.
@@ -169,12 +170,6 @@ Run the release script from a clean, up-to-date `main` branch:
 The script bumps the version in `warden/config/config.go` and `plugin/pom.xml`, creates the release commit, and publishes a GitHub release.
 The release workflows publish multi-architecture `warden-server`, `warden-web`, and `warden-minecraft` images to GitHub Container Registry, then open an infrastructure pull request with the new image tags.
 
-## Related Projects
-
-- [Sentinel](https://github.com/Gaucho-Racing/Sentinel): authentication and access management
-- [Depot](https://github.com/Gaucho-Racing/Depot): object storage holding the server backups
-- [Vault](https://github.com/Gaucho-Racing/Vault): secrets manager backing the deployment credentials
-
 ## Contributing
 
 If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also open an issue with the tag `enhancement`.
@@ -184,3 +179,7 @@ If you have a suggestion that would make this better, please fork the repo and c
 3. Commit your Changes (`git commit -m 'Add my amazing feature'`)
 4. Push to the Branch (`git push origin gh-username/my-amazing-feature`)
 5. Open a Pull Request
+
+## License
+
+Distributed under the MIT License. See `LICENSE.txt` for more information.
