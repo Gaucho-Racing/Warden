@@ -28,9 +28,7 @@ type presence struct {
 
 func (b *Bridge) markStopping() {
 	service.MarkServerStopping()
-	if b.session != nil {
-		b.updatePresence()
-	}
+	b.updatePresence()
 }
 
 // onReady forgets the last presence: a new gateway session starts with none.
@@ -59,7 +57,14 @@ func (b *Bridge) runPresence() {
 
 // updatePresence shows "Playing Minecraft" throughout; the status dot carries
 // the server state, since a bot only ever displays one activity.
+//
+// The nil check is not theoretical: discordgo takes a lock on the session
+// before checking anything, so calling this with no session panics rather
+// than erroring, and that took the pod down once already.
 func (b *Bridge) updatePresence() {
+	if b.session == nil {
+		return
+	}
 	state, _ := service.CurrentServerState()
 	b.presence.mu.Lock()
 	unchanged := state == b.presence.lastState
@@ -82,6 +87,9 @@ func (b *Bridge) updatePresence() {
 }
 
 func (b *Bridge) updateTopic() {
+	if b.session == nil {
+		return
+	}
 	state, status := service.CurrentServerState()
 	if status == nil {
 		return

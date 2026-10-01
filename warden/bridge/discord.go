@@ -89,8 +89,12 @@ func Start() {
 		hub:      NewHub(),
 		outbound: make(chan outboundMessage, outboundCapacity),
 	}
-	current = b
-	service.SetGameLink(b)
+	// Published only once fully built, on every return path. Nothing else
+	// may hold a half-initialised bridge.
+	defer func() {
+		current = b
+		service.SetGameLink(b)
+	}()
 
 	if !config.DiscordBridgeEnabled() {
 		logger.SugarLogger.Infof("bridge: DISCORD_TOKEN or DISCORD_CHANNEL_ID not set, Discord relay disabled")
@@ -102,22 +106,32 @@ func Start() {
 		return
 	}
 	session.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentMessageContent
-	session.AddHandler(b.onDiscordMessage)
-	session.AddHandler(b.onReady)
-	if err := session.Open(); err != nil {
-		logger.SugarLogger.Errorf("bridge: open Discord gateway: %v", err)
-		return
-	}
+
+	// Looked up over REST, before the gateway is opened. Everything a
+	// handler reads has to be in place first: READY arrives on its own
+	// goroutine the moment Open connects, and onReady goes straight to
+	// b.session.
 	me, err := session.User("@me")
 	if err != nil {
 		logger.SugarLogger.Errorf("bridge: look up bot user: %v", err)
-		session.Close()
 		return
 	}
 	b.botID = me.ID
 	b.channelID = config.DiscordChannelID
 	b.session = session
+	session.AddHandler(b.onDiscordMessage)
+	session.AddHandler(b.onReady)
+
+	// Sending is REST, so the queue drains with or without a gateway.
 	go b.deliver()
+
+	if err := session.Open(); err != nil {
+		// Notices still post; only the relay from Discord and the presence
+		// need the gateway. runPresence stays unstarted rather than logging
+		// a failure every fifteen seconds for the life of the process.
+		logger.SugarLogger.Errorf("bridge: open Discord gateway, relay and presence disabled: %v", err)
+		return
+	}
 	go b.runPresence()
 	logger.SugarLogger.Infof("bridge: connected to Discord, relaying channel %s", b.channelID)
 }
