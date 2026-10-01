@@ -214,29 +214,29 @@ var activeBackupStatuses = []string{
 // second run would both compete for that space and capture the first run's
 // half-written file.
 func ActiveBackupJob() (*model.BackupJob, error) {
-	var job model.BackupJob
-	err := database.DB.Where("status IN ?", activeBackupStatuses).
-		Order("created_at desc").First(&job).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &job, nil
+	return firstBackupJob(database.DB.Where("status IN ?", activeBackupStatuses))
 }
 
 func LastFinishedBackup() (*model.BackupJob, error) {
-	var job model.BackupJob
-	err := database.DB.Where("status NOT IN ?", activeBackupStatuses).
-		Order("created_at desc").First(&job).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
-	if err != nil {
+	return firstBackupJob(database.DB.Where("status NOT IN ?", activeBackupStatuses))
+}
+
+// firstBackupJob returns the newest matching job, or nil when there is none.
+//
+// Find into a slice rather than First into a struct: no rows is the normal
+// answer here, and First raises ErrRecordNotFound for it, which gorm logs at
+// error level. The backups page polls both of these every few seconds, so
+// that is a steady stream of error-shaped lines for a server that simply has
+// not been backed up yet.
+func firstBackupJob(query *gorm.DB) (*model.BackupJob, error) {
+	jobs := []model.BackupJob{}
+	if err := query.Order("created_at desc").Limit(1).Find(&jobs).Error; err != nil {
 		return nil, err
 	}
-	return &job, nil
+	if len(jobs) == 0 {
+		return nil, nil
+	}
+	return &jobs[0], nil
 }
 
 // ------------------------------------------------------------- job running
