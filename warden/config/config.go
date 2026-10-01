@@ -6,7 +6,7 @@ import (
 )
 
 const Name = "warden"
-const Version = "1.9.0"
+const Version = "1.10.0"
 
 func FormattedNameWithVersion() string {
 	return Name + ":v" + Version
