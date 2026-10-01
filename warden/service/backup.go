@@ -329,7 +329,7 @@ func runBackup(job model.BackupJob, delay time.Duration) {
 	}
 
 	job.Status = model.BackupStatusArchiving
-	job.StartedAt = startedAt
+	job.StartedAt = &startedAt
 	job.DepotFileID = upload.File.ID
 	job.FileName = name
 	if err := database.DB.Save(&job).Error; err != nil {
@@ -471,10 +471,10 @@ func finishBackup(job model.BackupJob, status string, message string) error {
 }
 
 func backupDuration(job model.BackupJob) time.Duration {
-	if job.FinishedAt == nil || job.StartedAt.IsZero() {
+	if job.FinishedAt == nil || job.StartedAt == nil {
 		return 0
 	}
-	return job.FinishedAt.Sub(job.StartedAt)
+	return job.FinishedAt.Sub(*job.StartedAt)
 }
 
 // ---------------------------------------------------------------- scheduler

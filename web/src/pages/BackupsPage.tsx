@@ -19,7 +19,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/lib/auth"
-import { bytes, duration, relativeTime } from "@/lib/format"
+import { bytes, duration, relativeTime, relativeTimeCoarse } from "@/lib/format"
 import { useNow } from "@/lib/useNow"
 import { cn } from "@/lib/utils"
 import {
@@ -44,7 +44,10 @@ const STATUS_LABELS: Record<BackupStatus, string> = {
 export default function BackupsPage() {
   const { isMinecraftAdmin } = useAuth()
   const backups = useBackups()
-  const now = useNow(1000)
+  // A minute is as precise as finished backups are reported, so the whole
+  // history does not re-render every second. The in-progress card keeps its
+  // own faster clock.
+  const now = useNow(60_000)
   const [confirming, setConfirming] = useState(false)
 
   if (backups.isLoading) {
@@ -103,7 +106,7 @@ export default function BackupsPage() {
 
       <div className="space-y-8">
         {active ? (
-          <ActiveBackup job={active} now={now} />
+          <ActiveBackup job={active} />
         ) : (
           <SchedulePreview
             cron={schedule.cron}
@@ -185,8 +188,13 @@ function Notice({ children }: { children: React.ReactNode }) {
  * it: while one is in flight, when the next one starts is not the question
  * anybody on this page is asking.
  */
-function ActiveBackup({ job, now }: { job: BackupJob; now: number }) {
-  const started = new Date(job.started_at || job.created_at)
+function ActiveBackup({ job }: { job: BackupJob }) {
+  // The only place a second hand earns its keep: this is the one thing on
+  // the page actively changing, and it is watched while it runs.
+  const now = useNow(1000)
+  // A job still warning players has not started yet, so it carries no
+  // started_at and the row's own creation time is the honest answer.
+  const started = new Date(job.started_at ?? job.created_at)
   const phase =
     job.status === "uploading"
       ? `Uploading ${job.size_bytes ? bytes(job.size_bytes) : "the archive"} to Depot`
@@ -232,7 +240,7 @@ function JobCard({
         <div className="min-w-0 flex-1">
           <div className="truncate font-mono text-sm">{job.file_name || job.id}</div>
           <div className="text-xs text-muted-foreground">
-            {relativeTime(new Date(job.created_at), now)} ·{" "}
+            {relativeTimeCoarse(new Date(job.created_at), now)} ·{" "}
             {job.trigger === "manual" ? "manual" : "scheduled"}
           </div>
         </div>
@@ -311,7 +319,7 @@ function ConfirmBackupDialog({
         <DialogHeader>
           <DialogTitle>Back up the server now?</DialogTitle>
           <DialogDescription>
-            Players get a ten second warning, then the world is flushed to disk and frozen while
+            Players get a fifteen second warning, then the world is flushed to disk and frozen while
             the archive is written. Expect a few seconds of lag. The upload runs afterwards and
             does not affect the game.
           </DialogDescription>
@@ -325,7 +333,7 @@ function ConfirmBackupDialog({
             onClick={() =>
               start.mutate(undefined, {
                 onSuccess: () => {
-                  toast.success("Backup starting in 10 seconds")
+                  toast.success("Backup starting in 15 seconds")
                   onOpenChange(false)
                 },
                 onError: (error) =>

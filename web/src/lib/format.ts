@@ -32,12 +32,29 @@ export function duration(milliseconds: number) {
   return rest ? `${hours}h ${rest}m` : `${hours}h`
 }
 
-/** Signed distance from now: "in 6h 12m", "3m ago", "now". */
+/** Signed distance from now, to the second: "in 6h 12m", "3m 20s ago", "now". */
 export function relativeTime(target: Date, now: number = Date.now()) {
   const delta = target.getTime() - now
   const magnitude = Math.abs(delta)
   if (magnitude < 45_000) return delta >= 0 ? "now" : "just now"
   const text = duration(magnitude)
+  return delta > 0 ? `in ${text}` : `${text} ago`
+}
+
+/**
+ * The same, rounded down to the minute, and a plain date once something is
+ * more than a day old.
+ *
+ * For anything already finished, seconds are false precision: they imply the
+ * reader cares whether a backup was 4m50s or 4m51s ago, and they force a
+ * re-render every second to stay honest about a number nobody is watching.
+ */
+export function relativeTimeCoarse(target: Date, now: number = Date.now()) {
+  const delta = target.getTime() - now
+  const magnitude = Math.abs(delta)
+  if (magnitude < 60_000) return delta >= 0 ? "now" : "just now"
+  if (magnitude >= 24 * 3_600_000) return target.toLocaleDateString()
+  const text = duration(Math.floor(magnitude / 60_000) * 60_000)
   return delta > 0 ? `in ${text}` : `${text} ago`
 }
 

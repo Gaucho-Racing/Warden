@@ -37,6 +37,13 @@ public final class BridgeListener implements Listener {
 
     /** Discord's blurple, marking a line as coming from Discord instead of a prefix. */
     private static final TextColor DISCORD_BLURPLE = TextColor.color(0x5865F2);
+
+    /**
+     * The SMP's own pink, so a Warden notice reads as part of the server
+     * rather than as another plugin. Matches the &d in the TAB header's
+     * "Gaucho Racing SMP" — legacy light purple, not an arbitrary pink.
+     */
+    private static final TextColor SMP_PINK = NamedTextColor.LIGHT_PURPLE;
     private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
 
     private final Plugin plugin;
@@ -127,8 +134,8 @@ public final class BridgeListener implements Listener {
             return;
         }
         Component line = Component.text()
-                .append(Component.text("[Warden] ", NamedTextColor.GRAY))
-                .append(Component.text(message.get("text").getAsString(), NamedTextColor.GOLD))
+                .append(Component.text("[Warden] ", SMP_PINK))
+                .append(Component.text(message.get("text").getAsString(), NamedTextColor.WHITE))
                 .build();
         Server server = plugin.getServer();
         server.getGlobalRegionScheduler().run(plugin, task -> server.sendMessage(line));

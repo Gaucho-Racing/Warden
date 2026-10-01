@@ -55,7 +55,9 @@ type BackupJob struct {
 	UploadMillis  int64  `json:"upload_millis"`
 	Error         string `json:"error,omitempty"`
 
-	StartedAt  time.Time  `json:"started_at"`
+	// Both are pointers so an unstarted or unfinished job omits them rather
+	// than sending Go's zero time, which a client renders as the year 1.
+	StartedAt  *time.Time `json:"started_at,omitempty"`
 	FinishedAt *time.Time `json:"finished_at,omitempty"`
 	CreatedAt  time.Time  `json:"created_at" gorm:"autoCreateTime;index"`
 	UpdatedAt  time.Time  `json:"updated_at" gorm:"autoUpdateTime"`

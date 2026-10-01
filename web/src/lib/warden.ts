@@ -315,7 +315,8 @@ export type BackupJob = {
   archive_millis: number
   upload_millis: number
   error?: string
-  started_at: string
+  /** Absent until the job leaves "pending" — see ActiveBackup. */
+  started_at?: string
   finished_at?: string
   created_at: string
 }

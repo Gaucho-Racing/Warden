@@ -46,7 +46,7 @@ services:
       # working without compose warning about four unset variables.
       BACKUP_TIMEZONE: ${BACKUP_TIMEZONE:-America/Los_Angeles}
       BACKUP_WARNING_LEAD: ${BACKUP_WARNING_LEAD:-5m}
-      BACKUP_MANUAL_DELAY: ${BACKUP_MANUAL_DELAY:-10s}
+      BACKUP_MANUAL_DELAY: ${BACKUP_MANUAL_DELAY:-15s}
       BACKUP_TIMEOUT: ${BACKUP_TIMEOUT:-60m}
 
   web:

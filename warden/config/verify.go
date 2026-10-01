@@ -11,7 +11,7 @@ const (
 	defaultLinkTokenTTL      = 15 * time.Minute
 	defaultGroupSyncInterval = 60 * time.Second
 	defaultBackupWarningLead = 5 * time.Minute
-	defaultBackupManualDelay = 10 * time.Second
+	defaultBackupManualDelay = 15 * time.Second
 	defaultBackupTimeout     = 60 * time.Minute
 	defaultBackupTimezone    = "America/Los_Angeles"
 )
