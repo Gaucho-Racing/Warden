@@ -3,10 +3,11 @@ import { Link } from "react-router-dom"
 
 import { PageContainer, PageHeader } from "@/components/PageContainer"
 import { SkinFrame } from "@/components/SkinFrame"
+import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { errorMessage, type MinecraftAccount, useAccounts } from "@/lib/warden"
+import { errorMessage, type MinecraftAccount, useAccounts, useServerStatus } from "@/lib/warden"
 
 function formatPlaytime(minutes: number) {
   const hours = Math.floor(minutes / 60)
@@ -41,6 +42,8 @@ function RosterStat({ label, value }: { label: string; value: string }) {
 
 export default function PlayersPage() {
   const accounts = useAccounts()
+  const serverStatus = useServerStatus()
+  const onlinePlayers = new Set(serverStatus.data?.online_players ?? [])
   const [filter, setFilter] = useState("")
 
   const term = filter.trim().toLowerCase()
@@ -116,7 +119,14 @@ export default function PlayersPage() {
                   label="Sessions"
                   value={account.stats ? account.stats.sessions.toLocaleString() : "—"}
                 />
-                <div className="text-xs text-muted-foreground">{formatLastSeen(seenAt(account))}</div>
+                {onlinePlayers.has(account.uuid) ? (
+                  <Badge>
+                    <span className="size-1.5 rounded-full bg-current" />
+                    Online
+                  </Badge>
+                ) : (
+                  <div className="text-xs text-muted-foreground">{formatLastSeen(seenAt(account))}</div>
+                )}
               </CardContent>
             </Card>
           </Link>

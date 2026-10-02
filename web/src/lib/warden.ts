@@ -118,6 +118,7 @@ export type ServerState = "active" | "empty" | "offline"
 export type ServerStatus = {
   state: ServerState
   online: number
+  online_players: string[]
   max_players: number
   unique_players: number
   uptime_minutes: number
