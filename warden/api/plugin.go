@@ -150,11 +150,12 @@ func normalizePlayer(rawUUID string, rawUsername string) (string, string, error)
 }
 
 type serverStatusReport struct {
-	Online        int     `json:"online"`
-	MaxPlayers    int     `json:"max_players"`
-	UniquePlayers int     `json:"unique_players"`
-	TPS           float64 `json:"tps"`
-	MSPT          float64 `json:"mspt"`
+	Online        int      `json:"online"`
+	Players       []string `json:"players"`
+	MaxPlayers    int      `json:"max_players"`
+	UniquePlayers int      `json:"unique_players"`
+	TPS           float64  `json:"tps"`
+	MSPT          float64  `json:"mspt"`
 	// Epoch milliseconds, as the JVM reports its own start time.
 	StartedAt int64 `json:"started_at"`
 	// Sent once from onDisable in place of a sample.
@@ -175,9 +176,19 @@ func ReportServerStatus(c *gin.Context) {
 		c.Status(http.StatusNoContent)
 		return
 	}
+	players := make([]string, 0, len(report.Players))
+	for _, raw := range report.Players {
+		uuid, err := service.NormalizeUUID(raw)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		players = append(players, uuid)
+	}
 	status := model.ServerStatus{
 		RecordedAt:    time.Now(),
 		Online:        report.Online,
+		OnlinePlayers: players,
 		MaxPlayers:    report.MaxPlayers,
 		UniquePlayers: report.UniquePlayers,
 		TPS:           report.TPS,

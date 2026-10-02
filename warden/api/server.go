@@ -11,6 +11,7 @@ import (
 type serverStatusResponse struct {
 	State         string     `json:"state"`
 	Online        int        `json:"online"`
+	OnlinePlayers []string   `json:"online_players"`
 	MaxPlayers    int        `json:"max_players"`
 	UniquePlayers int        `json:"unique_players"`
 	UptimeMinutes int        `json:"uptime_minutes"`
@@ -24,7 +25,7 @@ type serverStatusResponse struct {
 func GetServerStatus(c *gin.Context) {
 	Require(c, RequestTokenExists(c))
 	state, status := service.CurrentServerState()
-	response := serverStatusResponse{State: state}
+	response := serverStatusResponse{State: state, OnlinePlayers: []string{}}
 	if status != nil {
 		response.Online = status.Online
 		response.MaxPlayers = status.MaxPlayers
@@ -32,6 +33,7 @@ func GetServerStatus(c *gin.Context) {
 		response.TPS = status.TPS
 		response.RecordedAt = &status.RecordedAt
 		if state != service.ServerOffline {
+			response.OnlinePlayers = status.OnlinePlayers
 			response.UptimeMinutes = int(time.Since(status.StartedAt).Minutes())
 		}
 	}

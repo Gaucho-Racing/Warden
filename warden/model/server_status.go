@@ -14,6 +14,9 @@ type ServerStatus struct {
 	MSPT          float64   `json:"mspt"`
 	// When the game server process started; uptime is RecordedAt minus this.
 	StartedAt time.Time `json:"started_at"`
+	// Visible players' UUIDs. Only the latest sample's matters, so it is
+	// held in memory rather than stored with the history.
+	OnlinePlayers []string `json:"online_players" gorm:"-"`
 }
 
 func (ServerStatus) TableName() string {

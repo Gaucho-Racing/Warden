@@ -4,6 +4,8 @@ import com.gauchoracing.warden.Errors;
 import com.gauchoracing.warden.WardenPlugin;
 import com.gauchoracing.warden.staff.VanishManager;
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
@@ -28,8 +30,8 @@ public final class ServerStatusReporter implements Listener {
     private final long startedAt = ManagementFactory.getRuntimeMXBean().getStartTime();
     private final AtomicBoolean pending = new AtomicBoolean();
 
-    record ServerStatus(int online, int maxPlayers, int uniquePlayers, double tps, double mspt,
-            long startedAt) {}
+    record ServerStatus(int online, List<String> players, int maxPlayers, int uniquePlayers,
+            double tps, double mspt, long startedAt) {}
 
     private record Stopping(boolean stopping) {}
 
@@ -41,13 +43,13 @@ public final class ServerStatusReporter implements Listener {
     /** Call from the main thread. Sampling is main-thread; the POST is not. */
     public void report() {
         Server server = plugin.getServer();
-        int online = 0;
+        List<String> players = new ArrayList<>();
         for (Player player : server.getOnlinePlayers()) {
             if (!vanish.isVanished(player.getUniqueId())) {
-                online++;
+                players.add(player.getUniqueId().toString());
             }
         }
-        ServerStatus status = new ServerStatus(online, server.getMaxPlayers(),
+        ServerStatus status = new ServerStatus(players.size(), players, server.getMaxPlayers(),
                 server.getOfflinePlayers().length, server.getTPS()[0], server.getAverageTickTime(),
                 startedAt);
         plugin.runAsync(() -> {
